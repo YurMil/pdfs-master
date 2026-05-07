@@ -26,6 +26,7 @@ import type {
 import { downloadExportFiles, resolveSplitMode, runExport } from '@/services/exportPdf';
 import { importFiles, reconvertImageDocument } from '@/services/importPdf';
 import { ACCEPT_IMPORT_TYPES } from '@/services/importImage';
+import { DEFAULT_IMAGE_IMPORT_SETTINGS } from '@/domain/paperFormat';
 import { ThumbnailQueue } from '@/services/thumbnailQueue';
 import { usePdfStore } from '@/store/pdfStore';
 import { makeObjectUrl, revokeObjectUrl } from '@/utils/objectUrl';
@@ -467,7 +468,11 @@ export function App() {
       return;
     }
 
-    const nextSettings: ImageImportSettings = { ...target.imageFitSettings, ...partial };
+    const nextSettings: ImageImportSettings = {
+      ...DEFAULT_IMAGE_IMPORT_SETTINGS,
+      ...target.imageFitSettings,
+      ...partial,
+    };
 
     setImageFormatBusyDocs((current) => {
       const next = new Set(current);
@@ -479,6 +484,20 @@ export function App() {
       thumbnailQueue.cancelDocument(documentId);
       const replacement = await reconvertImageDocument(target.originalImageFile, nextSettings);
       usePdfStore.getState().applyImageDocumentReimport(documentId, replacement);
+
+      // The cached workspace PDF inside the viewer dialog is now stale.
+      // Drop it so the next open (or a still-open viewer) regenerates fresh.
+      viewerRequestRef.current += 1;
+      clearViewerCache();
+      setViewerDialog((current) => ({
+        ...current,
+        open: false,
+        loading: false,
+        pdfBlob: undefined,
+        revision: undefined,
+        error: undefined,
+        progress: 0,
+      }));
     } catch (error) {
       const issue = toErrorModel(error);
       usePdfStore.getState().pushNotification({

@@ -8,6 +8,8 @@ import type {
   PaperOrientation,
 } from '@/domain/types';
 import {
+  MARGIN_LABELS,
+  MARGIN_OPTIONS_MM,
   PAPER_FORMATS,
   PAPER_FORMAT_LABELS,
   PAPER_ORIENTATIONS,
@@ -159,6 +161,21 @@ function ImageFormatSection({
             {PAPER_ORIENTATIONS.map((orientation) => (
               <option key={orientation} value={orientation}>
                 {PAPER_ORIENTATION_LABELS[orientation]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Margin</span>
+          <select
+            disabled={busy || !onChange}
+            value={settings.marginMm}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            onChange={(event) => onChange?.(documentId, { marginMm: Number(event.target.value) })}
+          >
+            {MARGIN_OPTIONS_MM.map((mm) => (
+              <option key={mm} value={mm}>
+                {MARGIN_LABELS[mm]}
               </option>
             ))}
           </select>
