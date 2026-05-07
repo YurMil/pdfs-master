@@ -14,6 +14,8 @@ export type DocumentKind = 'pdf' | 'image';
 export interface ImageImportSettings {
   paperFormat: PaperFormat;
   orientation: PaperOrientation;
+  /** Symmetric page margin in millimetres applied around the fitted image. */
+  marginMm: number;
 }
 
 export interface ErrorModel {

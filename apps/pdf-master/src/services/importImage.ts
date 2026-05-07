@@ -75,7 +75,13 @@ export async function convertImageToPdf(
     imageWidth,
     imageHeight,
   );
-  const rect = fitImageRect(pageSize.width, pageSize.height, imageWidth, imageHeight);
+  const rect = fitImageRect(
+    pageSize.width,
+    pageSize.height,
+    imageWidth,
+    imageHeight,
+    settings.marginMm,
+  );
 
   const page = pdfDoc.addPage([pageSize.width, pageSize.height]);
   page.drawImage(image, rect);

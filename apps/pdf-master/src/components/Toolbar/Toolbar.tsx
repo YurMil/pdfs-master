@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import type { ImageImportSettings, PaperFormat, PaperOrientation, ThumbnailDensity, ViewMode } from '@/domain/types';
 import {
+  MARGIN_LABELS,
+  MARGIN_OPTIONS_MM,
   PAPER_FORMATS,
   PAPER_FORMAT_LABELS,
   PAPER_ORIENTATIONS,
@@ -314,6 +316,19 @@ function ImageFormatPicker({
         {PAPER_ORIENTATIONS.map((orientation) => (
           <option key={orientation} value={orientation}>
             {PAPER_ORIENTATION_LABELS[orientation]}
+          </option>
+        ))}
+      </select>
+      <span className="ml-1 text-[10px] uppercase tracking-[0.14em] text-slate-400">Margin</span>
+      <select
+        aria-label="Default page margin for imported images"
+        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-slate-900 outline-none focus:ring-1 focus:ring-slate-400"
+        value={settings.marginMm}
+        onChange={(event) => onChange({ marginMm: Number(event.target.value) })}
+      >
+        {MARGIN_OPTIONS_MM.map((mm) => (
+          <option key={mm} value={mm}>
+            {MARGIN_LABELS[mm]}
           </option>
         ))}
       </select>
