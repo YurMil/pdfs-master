@@ -231,8 +231,8 @@ function SegmentedControl<T extends string>({
           className={clsx(
             'rounded-lg px-2.5 py-1 text-xs font-medium transition',
             option.value === value
-              ? 'bg-[color:var(--pm-surface-strong)] text-[color:var(--pm-on-surface-strong)] shadow-sm'
-              : 'text-[color:var(--pm-text-muted)] hover:bg-[color:var(--pm-surface-hover)]',
+              ? 'bg-[color:var(--pm-selected-bg)] text-[color:var(--pm-selected-fg)] shadow-sm'
+              : 'text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]',
           )}
           onClick={() => onChange(option.value)}
         >

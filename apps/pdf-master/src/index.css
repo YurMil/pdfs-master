@@ -19,14 +19,17 @@ html[data-theme='light'] {
   --pm-surface-strong: #0f172a;
   --pm-on-surface-strong: #ffffff;
 
+  --pm-selected-bg: #0f172a;
+  --pm-selected-fg: #ffffff;
+
   --pm-text-strong: #0f172a;
   --pm-text: #334155;
-  --pm-text-muted: #64748b;
-  --pm-text-faint: #94a3b8;
+  --pm-text-muted: #4b5563;
+  --pm-text-faint: #6b7280;
 
   --pm-border: rgba(15, 23, 42, 0.1);
   --pm-border-subtle: rgba(15, 23, 42, 0.06);
-  --pm-border-strong: #94a3b8;
+  --pm-border-strong: #64748b;
 
   --pm-accent: #2563eb;
   --pm-accent-strong: #1d4ed8;
@@ -65,31 +68,35 @@ html[data-theme='dark'] {
   --pm-workspace: #0f172a;
 
   --pm-surface: #1e293b;
-  --pm-surface-hover: #273449;
+  --pm-surface-hover: #2c3a52;
   --pm-surface-muted: #18243a;
   --pm-surface-strong: #e2e8f0;
   --pm-on-surface-strong: #0f172a;
 
-  --pm-text-strong: #f1f5f9;
-  --pm-text: #cbd5e1;
-  --pm-text-muted: #94a3b8;
-  --pm-text-faint: #64748b;
+  /* Selected/active chip — uses accent in dark for visual clarity (avoids near-white pill in a dark UI). */
+  --pm-selected-bg: #2563eb;
+  --pm-selected-fg: #ffffff;
 
-  --pm-border: rgba(148, 163, 184, 0.18);
-  --pm-border-subtle: rgba(148, 163, 184, 0.1);
-  --pm-border-strong: #475569;
+  --pm-text-strong: #f8fafc;
+  --pm-text: #e2e8f0;
+  --pm-text-muted: #cbd5e1;
+  --pm-text-faint: #94a3b8;
+
+  --pm-border: rgba(148, 163, 184, 0.28);
+  --pm-border-subtle: rgba(148, 163, 184, 0.16);
+  --pm-border-strong: #94a3b8;
 
   --pm-accent: #3b82f6;
   --pm-accent-strong: #60a5fa;
-  --pm-accent-soft: rgba(59, 130, 246, 0.18);
-  --pm-on-accent: #0b1220;
+  --pm-accent-soft: rgba(59, 130, 246, 0.22);
+  --pm-on-accent: #ffffff;
 
   --pm-danger: #f87171;
   --pm-danger-strong: #fca5a5;
-  --pm-danger-surface: rgba(244, 63, 94, 0.14);
-  --pm-danger-surface-hover: rgba(244, 63, 94, 0.22);
-  --pm-danger-border: rgba(244, 63, 94, 0.45);
-  --pm-danger-text: #fecdd3;
+  --pm-danger-surface: rgba(244, 63, 94, 0.16);
+  --pm-danger-surface-hover: rgba(244, 63, 94, 0.26);
+  --pm-danger-border: rgba(248, 113, 113, 0.55);
+  --pm-danger-text: #fda4af;
 
   --pm-success: #4ade80;
   --pm-warning: #fbbf24;
@@ -151,4 +158,11 @@ textarea {
 
 ::selection {
   background: var(--pm-selection);
+}
+
+/* Visible focus ring for keyboard navigation (WCAG 2.4.7) */
+:where(button, [role='button'], a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--pm-focus);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
 }

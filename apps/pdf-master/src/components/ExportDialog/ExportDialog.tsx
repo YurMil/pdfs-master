@@ -132,14 +132,14 @@ function ModeCard({ title, description, active, disabled, onClick }: { title: st
       type="button"
       className={clsx(
         'flex min-w-0 flex-col rounded-xl border p-3 text-left transition',
-        active ? 'border-[color:var(--pm-surface-strong)] bg-[color:var(--pm-surface-strong)] text-[color:var(--pm-on-surface-strong)]' : 'border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text-strong)]',
+        active ? 'border-[color:var(--pm-selected-bg)] bg-[color:var(--pm-selected-bg)] text-[color:var(--pm-selected-fg)]' : 'border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text-strong)]',
         disabled && 'cursor-not-allowed opacity-50',
       )}
       onClick={onClick}
       disabled={disabled}
     >
       <p className="w-full font-medium break-all line-clamp-2">{title}</p>
-      <p className={clsx('mt-2 break-all', description.length > 40 ? 'text-xs leading-snug' : 'text-sm', active ? 'text-[color:var(--pm-text-faint)]' : 'text-[color:var(--pm-text-muted)]')}>{description}</p>
+      <p className={clsx('mt-2 break-all', description.length > 40 ? 'text-xs leading-snug' : 'text-sm', active ? 'text-[color:var(--pm-selected-fg)]/85' : 'text-[color:var(--pm-text-muted)]')}>{description}</p>
     </button>
   );
 }
