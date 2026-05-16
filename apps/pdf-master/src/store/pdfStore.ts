@@ -15,6 +15,7 @@ import type {
   DropTargetPosition,
   ExportMode,
   FormFieldValue,
+  ImageImportSettings,
   JobKind,
   JobState,
   NotificationModel,
@@ -24,8 +25,9 @@ import type {
 } from '@/domain/types';
 import type { ImportedDocument } from '@/services/importPdf';
 import { clearSelection, computeSelection, selectAllInDocument, sortPageIdsByWorkspace } from '@/services/selectionService';
+import { DEFAULT_IMAGE_IMPORT_SETTINGS } from '@/domain/paperFormat';
 import { createId } from '@/utils/ids';
-import { revokeObjectUrl } from '@/utils/objectUrl';
+import { makeObjectUrl, revokeObjectUrl } from '@/utils/objectUrl';
 
 interface PdfStoreActions {
   importDocuments: (documents: ImportedDocument[]) => void;
@@ -53,6 +55,8 @@ interface PdfStoreActions {
   setDocumentFlattening: (documentId: string, flatten: boolean) => void;
   pushNotification: (notification: Omit<NotificationModel, 'id'>) => void;
   dismissNotification: (notificationId: string) => void;
+  setImageImportSettings: (settings: Partial<ImageImportSettings>) => void;
+  applyImageDocumentReimport: (documentId: string, replacement: ImportedDocument) => void;
 }
 
 export type PdfStore = PdfAppState & PdfStoreActions;
@@ -82,6 +86,7 @@ function createInitialState(): PdfAppState {
       exportMode: { kind: 'workspace' },
       exportFileName: 'pdf-master-export',
       splitRangeInput: '1-2;3-4',
+      imageImportSettings: { ...DEFAULT_IMAGE_IMPORT_SETTINGS },
     },
     notifications: [],
   };
@@ -101,7 +106,10 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
       };
 
       for (const entry of documents) {
-        workspace = addDocumentToWorkspace(workspace, entry.sourceFile, entry.payload, entry.sourceUrl);
+        workspace = addDocumentToWorkspace(workspace, entry.sourceFile, entry.payload, entry.sourceUrl, {
+          originalImageFile: entry.originalImageFile,
+          imageFitSettings: entry.imageFitSettings,
+        });
       }
 
       const nextActiveDocument = state.ui.activeDocumentId ?? documents[0]?.payload.id;
@@ -138,6 +146,10 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
           entry.sourceUrl,
           targetPageId,
           position,
+          {
+            originalImageFile: entry.originalImageFile,
+            imageFitSettings: entry.imageFitSettings,
+          },
         );
       }
 
@@ -421,6 +433,97 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
     set((state) => ({
       notifications: state.notifications.filter((notification) => notification.id !== notificationId),
     }));
+  },
+
+  setImageImportSettings: (settings) => {
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        imageImportSettings: { ...state.ui.imageImportSettings, ...settings },
+      },
+    }));
+  },
+
+  applyImageDocumentReimport: (documentId, replacement) => {
+    set((state) => {
+      const existing = state.documents[documentId];
+      if (!existing) {
+        return state;
+      }
+
+      // Revoke the previous source URL and any old thumbnails for this doc.
+      revokeObjectUrl(existing.sourceUrl);
+      const oldPageIds = state.pageOrderByDocument[documentId] ?? [];
+      const thumbnails = { ...state.thumbnails };
+      for (const pageId of oldPageIds) {
+        revokeObjectUrl(thumbnails[pageId]?.url);
+        delete thumbnails[pageId];
+      }
+
+      // Drop the old pages while preserving the document's slot in pageOrder.
+      const oldPageIdSet = new Set(oldPageIds);
+      const firstOldIndex = state.pageOrder.findIndex((id) => oldPageIdSet.has(id));
+      const remainingPages = { ...state.pages };
+      for (const pageId of oldPageIdSet) {
+        delete remainingPages[pageId];
+      }
+      const remainingOrder = state.pageOrder.filter((id) => !oldPageIdSet.has(id));
+
+      // Build the replacement document/page records (re-using the existing document id).
+      const newPages: Record<string, typeof state.pages[string]> = {};
+      const newPageIds: string[] = [];
+      for (const page of replacement.payload.pages) {
+        newPages[page.id] = {
+          id: page.id,
+          documentId,
+          sourcePageIndex: page.sourcePageIndex,
+          width: page.width,
+          height: page.height,
+          rotation: 0,
+          label: page.label,
+        };
+        newPageIds.push(page.id);
+      }
+
+      const newSourceUrl = makeObjectUrl(replacement.sourceFile.file);
+      const updatedDocument = {
+        ...existing,
+        sourceFile: replacement.sourceFile,
+        sourceFileId: replacement.sourceFile.id,
+        sourceUrl: newSourceUrl,
+        pageIds: newPageIds,
+        pageCount: replacement.payload.pageCount,
+        metadata: replacement.payload.metadata,
+        hasForms: replacement.payload.hasForms,
+        formFields: replacement.payload.formFields,
+        kind: 'image' as const,
+        originalImageFile: replacement.originalImageFile ?? existing.originalImageFile,
+        imageFitSettings: replacement.imageFitSettings ?? existing.imageFitSettings,
+      };
+
+      const insertAt = firstOldIndex === -1 ? remainingOrder.length : firstOldIndex;
+      const nextPageOrder = [...remainingOrder];
+      nextPageOrder.splice(insertAt, 0, ...newPageIds);
+
+      const documents = { ...state.documents, [documentId]: updatedDocument };
+      const pages = { ...remainingPages, ...newPages };
+
+      const remainingSelected = state.selectedPageIds.filter((id) => !oldPageIdSet.has(id));
+      return {
+        ...state,
+        documents,
+        pages,
+        pageOrder: nextPageOrder,
+        pageOrderByDocument: {
+          ...state.pageOrderByDocument,
+          [documentId]: newPageIds,
+        },
+        thumbnails,
+        selectedPageIds: remainingSelected,
+        selectedDocumentIds: deriveSelectedDocumentIds(remainingSelected, pages),
+        anchorPageId: oldPageIdSet.has(state.anchorPageId ?? '') ? undefined : state.anchorPageId,
+      };
+    });
   },
 }));
 

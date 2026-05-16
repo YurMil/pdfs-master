@@ -1,5 +1,20 @@
 import clsx from 'clsx';
-import type { DocumentEntity, FormFieldModel, FormFieldValue } from '@/domain/types';
+import type {
+  DocumentEntity,
+  FormFieldModel,
+  FormFieldValue,
+  ImageImportSettings,
+  PaperFormat,
+  PaperOrientation,
+} from '@/domain/types';
+import {
+  MARGIN_LABELS,
+  MARGIN_OPTIONS_MM,
+  PAPER_FORMATS,
+  PAPER_FORMAT_LABELS,
+  PAPER_ORIENTATIONS,
+  PAPER_ORIENTATION_LABELS,
+} from '@/domain/paperFormat';
 import { countCompletedFields } from '@/services/formService';
 import { getMetadataRows } from '@/services/metadataService';
 
@@ -7,9 +22,17 @@ interface InspectorProps {
   document?: DocumentEntity;
   onFieldChange: (fieldName: string, value: FormFieldValue) => void;
   onFlattenToggle: (flatten: boolean) => void;
+  onImageFormatChange?: (documentId: string, settings: Partial<ImageImportSettings>) => void;
+  imageFormatBusy?: boolean;
 }
 
-export function Inspector({ document, onFieldChange, onFlattenToggle }: InspectorProps) {
+export function Inspector({
+  document,
+  onFieldChange,
+  onFlattenToggle,
+  onImageFormatChange,
+  imageFormatBusy,
+}: InspectorProps) {
   if (!document) {
     return (
       <div className="flex h-full flex-col bg-[color:var(--pm-panel)]">
@@ -66,6 +89,15 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
           </div>
         </section>
 
+        {document.kind === 'image' && document.imageFitSettings ? (
+          <ImageFormatSection
+            documentId={document.id}
+            settings={document.imageFitSettings}
+            busy={imageFormatBusy}
+            onChange={onImageFormatChange}
+          />
+        ) : null}
+
         <section className="rounded-xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)]">
           <div className="border-b border-[color:var(--pm-border-subtle)] px-3 py-2.5">
             <h3 className="text-sm font-semibold text-[color:var(--pm-text-strong)]">Form fields</h3>
@@ -80,6 +112,77 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
         </section>
       </div>
     </div>
+  );
+}
+
+function ImageFormatSection({
+  documentId,
+  settings,
+  busy,
+  onChange,
+}: {
+  documentId: string;
+  settings: ImageImportSettings;
+  busy?: boolean;
+  onChange?: (documentId: string, settings: Partial<ImageImportSettings>) => void;
+}) {
+  return (
+    <section className="rounded-xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)]">
+      <div className="border-b border-[color:var(--pm-border-subtle)] px-3 py-2.5">
+        <h3 className="text-sm font-semibold text-[color:var(--pm-text-strong)]">Image page format</h3>
+        <p className="mt-0.5 text-xs text-[color:var(--pm-text-muted)]">
+          Fits the source image on a paper-sized page without changing its proportions.
+        </p>
+      </div>
+      <div className="space-y-3 px-3 py-3 text-sm">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--pm-text-muted)]">Paper</span>
+          <select
+            disabled={busy || !onChange}
+            value={settings.paperFormat}
+            className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm text-[color:var(--pm-text-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            onChange={(event) => onChange?.(documentId, { paperFormat: event.target.value as PaperFormat })}
+          >
+            {PAPER_FORMATS.map((format) => (
+              <option key={format} value={format}>
+                {PAPER_FORMAT_LABELS[format]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--pm-text-muted)]">Orientation</span>
+          <select
+            disabled={busy || !onChange}
+            value={settings.orientation}
+            className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm text-[color:var(--pm-text-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            onChange={(event) => onChange?.(documentId, { orientation: event.target.value as PaperOrientation })}
+          >
+            {PAPER_ORIENTATIONS.map((orientation) => (
+              <option key={orientation} value={orientation}>
+                {PAPER_ORIENTATION_LABELS[orientation]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--pm-text-muted)]">Margin</span>
+          <select
+            disabled={busy || !onChange}
+            value={settings.marginMm}
+            className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm text-[color:var(--pm-text-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            onChange={(event) => onChange?.(documentId, { marginMm: Number(event.target.value) })}
+          >
+            {MARGIN_OPTIONS_MM.map((mm) => (
+              <option key={mm} value={mm}>
+                {MARGIN_LABELS[mm]}
+              </option>
+            ))}
+          </select>
+        </label>
+        {busy ? <p className="text-xs text-[color:var(--pm-text-muted)]">Re-rendering image…</p> : null}
+      </div>
+    </section>
   );
 }
 

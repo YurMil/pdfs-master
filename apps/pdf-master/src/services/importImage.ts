@@ -1,4 +1,10 @@
 import { PDFDocument } from 'pdf-lib';
+import type { ImageImportSettings } from '@/domain/types';
+import {
+  DEFAULT_IMAGE_IMPORT_SETTINGS,
+  fitImageRect,
+  getPageSizePt,
+} from '@/domain/paperFormat';
 
 /** MIME types that pdf-lib can embed natively. */
 const NATIVE_JPEG = new Set(['image/jpeg', 'image/jpg']);
@@ -24,18 +30,23 @@ export const ACCEPT_IMPORT_TYPES =
 
 export interface ImageToPdfResult {
   pdfFile: File;
-  width: number;
-  height: number;
+  /** Final PDF page width in PDF points. */
+  pageWidth: number;
+  /** Final PDF page height in PDF points. */
+  pageHeight: number;
 }
 
 /**
  * Convert an image File into a single-page PDF File using pdf-lib.
  *
- * For JPEG/PNG — uses pdf-lib's native embedders.
- * For other formats (WebP, BMP, GIF, TIFF, SVG) — first converts to PNG
- * via an offscreen canvas, then embeds into pdf-lib.
+ * The image is fitted into a paper-sized page (A0–A4) defined by `settings`,
+ * preserving its aspect ratio and centering it on the page. The original
+ * resolution is left untouched; only the surrounding page changes.
  */
-export async function convertImageToPdf(imageFile: File): Promise<ImageToPdfResult> {
+export async function convertImageToPdf(
+  imageFile: File,
+  settings: ImageImportSettings = DEFAULT_IMAGE_IMPORT_SETTINGS,
+): Promise<ImageToPdfResult> {
   let imageBytes: Uint8Array;
   let mimeType = imageFile.type.toLowerCase();
 
@@ -57,9 +68,23 @@ export async function convertImageToPdf(imageFile: File): Promise<ImageToPdfResu
     image = await pdfDoc.embedPng(imageBytes);
   }
 
-  const { width, height } = image.scale(1);
-  const page = pdfDoc.addPage([width, height]);
-  page.drawImage(image, { x: 0, y: 0, width, height });
+  const { width: imageWidth, height: imageHeight } = image.scale(1);
+  const pageSize = getPageSizePt(
+    settings.paperFormat,
+    settings.orientation,
+    imageWidth,
+    imageHeight,
+  );
+  const rect = fitImageRect(
+    pageSize.width,
+    pageSize.height,
+    imageWidth,
+    imageHeight,
+    settings.marginMm,
+  );
+
+  const page = pdfDoc.addPage([pageSize.width, pageSize.height]);
+  page.drawImage(image, rect);
 
   const pdfBytes = await pdfDoc.save();
   const baseName = imageFile.name.replace(/\.[^.]+$/, '');
@@ -68,7 +93,7 @@ export async function convertImageToPdf(imageFile: File): Promise<ImageToPdfResu
     lastModified: imageFile.lastModified,
   });
 
-  return { pdfFile, width, height };
+  return { pdfFile, pageWidth: pageSize.width, pageHeight: pageSize.height };
 }
 
 /**

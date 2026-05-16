@@ -7,6 +7,16 @@ export type JobKind = 'ingest' | 'render' | 'export';
 export type FormFieldKind = 'text' | 'checkbox' | 'dropdown' | 'radio' | 'option-list' | 'unsupported';
 export type FormFieldValue = string | boolean | string[] | null;
 export type ExportModeKind = 'workspace' | 'selection' | 'split';
+export type PaperFormat = 'A0' | 'A1' | 'A2' | 'A3' | 'A4';
+export type PaperOrientation = 'auto' | 'portrait' | 'landscape';
+export type DocumentKind = 'pdf' | 'image';
+
+export interface ImageImportSettings {
+  paperFormat: PaperFormat;
+  orientation: PaperOrientation;
+  /** Symmetric page margin in millimetres applied around the fitted image. */
+  marginMm: number;
+}
 
 export interface ErrorModel {
   code: string;
@@ -66,6 +76,12 @@ export interface DocumentEntity {
   sourceUrl: string;
   status: ProcessingStatus;
   errors: ErrorModel[];
+  /** Whether this document was created from an image file. */
+  kind: DocumentKind;
+  /** Original image file kept for re-conversion when format/orientation changes. */
+  originalImageFile?: File;
+  /** Active image fit settings for image-derived documents. */
+  imageFitSettings?: ImageImportSettings;
 }
 
 export interface PageEntity {
@@ -137,6 +153,7 @@ export interface UiState {
   exportMode: ExportMode;
   exportFileName: string;
   splitRangeInput: string;
+  imageImportSettings: ImageImportSettings;
 }
 
 export interface WorkspaceSnapshot {

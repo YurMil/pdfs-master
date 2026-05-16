@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
-import type { ThumbnailDensity, ViewMode } from '@/domain/types';
+import type { ImageImportSettings, PaperFormat, PaperOrientation, ThumbnailDensity, ViewMode } from '@/domain/types';
+import {
+  MARGIN_LABELS,
+  MARGIN_OPTIONS_MM,
+  PAPER_FORMATS,
+  PAPER_FORMAT_LABELS,
+  PAPER_ORIENTATIONS,
+  PAPER_ORIENTATION_LABELS,
+} from '@/domain/paperFormat';
 
 interface ToolbarProps {
   hasWorkspace: boolean;
@@ -28,6 +36,8 @@ interface ToolbarProps {
   onToggleDocumentsPane: () => void;
   onToggleInspector: () => void;
   onSearchChange: (value: string) => void;
+  imageImportSettings: ImageImportSettings;
+  onImageImportSettingsChange: (settings: Partial<ImageImportSettings>) => void;
 }
 
 const densityOptions: Array<{ value: ThumbnailDensity; label: string }> = [
@@ -62,6 +72,8 @@ export function Toolbar({
   onToggleDocumentsPane,
   onToggleInspector,
   onSearchChange,
+  imageImportSettings,
+  onImageImportSettingsChange,
 }: ToolbarProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--pm-border)] bg-[color:var(--pm-shell)]/95 backdrop-blur-md">
@@ -97,6 +109,10 @@ export function Toolbar({
           <PrimaryActionButton label="Merge" onClick={onMerge} disabled={!hasWorkspace} />
           <PrimaryActionButton label="Split" onClick={onSplit} disabled={!canSplit} />
           {selectedCount ? <PrimaryActionButton label="Extract" onClick={onExtract} /> : null}
+          <ImageFormatPicker
+            settings={imageImportSettings}
+            onChange={onImageImportSettingsChange}
+          />
         </div>
 
         <div className="ml-auto flex flex-1 flex-wrap items-center justify-end gap-2 xl:flex-nowrap">
@@ -263,6 +279,60 @@ function IconButton({
     >
       {children}
     </button>
+  );
+}
+
+function ImageFormatPicker({
+  settings,
+  onChange,
+}: {
+  settings: ImageImportSettings;
+  onChange: (settings: Partial<ImageImportSettings>) => void;
+}) {
+  return (
+    <div
+      className="flex h-9 items-center gap-1.5 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 text-xs text-[color:var(--pm-text-muted)]"
+      title="Default page format applied to imported images. Click an image-derived page in the Inspector to override per file."
+    >
+      <span className="font-medium uppercase tracking-[0.14em] text-[color:var(--pm-text-muted)]">Image</span>
+      <select
+        aria-label="Default paper format for imported images"
+        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
+        value={settings.paperFormat}
+        onChange={(event) => onChange({ paperFormat: event.target.value as PaperFormat })}
+      >
+        {PAPER_FORMATS.map((format) => (
+          <option key={format} value={format}>
+            {PAPER_FORMAT_LABELS[format]}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Default orientation for imported images"
+        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
+        value={settings.orientation}
+        onChange={(event) => onChange({ orientation: event.target.value as PaperOrientation })}
+      >
+        {PAPER_ORIENTATIONS.map((orientation) => (
+          <option key={orientation} value={orientation}>
+            {PAPER_ORIENTATION_LABELS[orientation]}
+          </option>
+        ))}
+      </select>
+      <span className="ml-1 text-[10px] uppercase tracking-[0.14em] text-[color:var(--pm-text-faint)]">Margin</span>
+      <select
+        aria-label="Default page margin for imported images"
+        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
+        value={settings.marginMm}
+        onChange={(event) => onChange({ marginMm: Number(event.target.value) })}
+      >
+        {MARGIN_OPTIONS_MM.map((mm) => (
+          <option key={mm} value={mm}>
+            {MARGIN_LABELS[mm]}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 

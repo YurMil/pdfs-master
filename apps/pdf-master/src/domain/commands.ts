@@ -2,11 +2,17 @@ import type {
   DocumentEntity,
   DropTargetPosition,
   FormFieldValue,
+  ImageImportSettings,
   IngestDocumentPayload,
   PageEntity,
   SourceFileModel,
   WorkspaceSnapshot,
 } from '@/domain/types';
+
+interface AddDocumentExtras {
+  originalImageFile?: File;
+  imageFitSettings?: ImageImportSettings;
+}
 
 export function emptyWorkspace(): WorkspaceSnapshot {
   return {
@@ -36,6 +42,7 @@ export function addDocumentToWorkspace(
   sourceFile: SourceFileModel,
   payload: IngestDocumentPayload,
   sourceUrl: string,
+  extras: AddDocumentExtras = {},
 ): WorkspaceSnapshot {
   const pages: Record<string, PageEntity> = { ...snapshot.pages };
   const pageIds: string[] = [];
@@ -68,6 +75,9 @@ export function addDocumentToWorkspace(
     sourceUrl,
     status: 'success',
     errors: [],
+    kind: extras.originalImageFile ? 'image' : 'pdf',
+    originalImageFile: extras.originalImageFile,
+    imageFitSettings: extras.imageFitSettings,
   };
 
   const documents = { ...snapshot.documents, [document.id]: document };
@@ -94,6 +104,7 @@ export function addDocumentToWorkspaceAtPosition(
   sourceUrl: string,
   targetPageId: string,
   position: DropTargetPosition,
+  extras: AddDocumentExtras = {},
 ): WorkspaceSnapshot {
   const pages: Record<string, PageEntity> = { ...snapshot.pages };
   const pageIds: string[] = [];
@@ -126,6 +137,9 @@ export function addDocumentToWorkspaceAtPosition(
     sourceUrl,
     status: 'success',
     errors: [],
+    kind: extras.originalImageFile ? 'image' : 'pdf',
+    originalImageFile: extras.originalImageFile,
+    imageFitSettings: extras.imageFitSettings,
   };
 
   const documents = { ...snapshot.documents, [document.id]: document };

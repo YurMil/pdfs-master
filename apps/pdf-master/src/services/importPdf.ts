@@ -1,15 +1,24 @@
 import { validatePdfFile, validateImportFile, isImageFile } from '@/domain/validation';
 import { toErrorModel } from '@/domain/errors';
-import type { ErrorModel, IngestDocumentPayload, SourceFileModel } from '@/domain/types';
+import type {
+  ErrorModel,
+  ImageImportSettings,
+  IngestDocumentPayload,
+  SourceFileModel,
+} from '@/domain/types';
 import type { IngestWorkerResponse } from '@/workers/protocols';
 import { createId } from '@/utils/ids';
 import { makeObjectUrl } from '@/utils/objectUrl';
 import { convertImageToPdf } from '@/services/importImage';
+import { DEFAULT_IMAGE_IMPORT_SETTINGS } from '@/domain/paperFormat';
 
 export interface ImportedDocument {
   sourceFile: SourceFileModel;
   payload: IngestDocumentPayload;
   sourceUrl: string;
+  /** Set when the document was generated from an image file. */
+  originalImageFile?: File;
+  imageFitSettings?: ImageImportSettings;
 }
 
 export interface ImportResult {
@@ -24,9 +33,12 @@ export interface ImportResult {
 export async function importFiles(
   files: File[],
   onProgress?: (completed: number, total: number) => void,
+  imageSettings: ImageImportSettings = DEFAULT_IMAGE_IMPORT_SETTINGS,
 ): Promise<ImportResult> {
   const errors: Array<{ fileName: string; error: ErrorModel }> = [];
   const pdfFiles: File[] = [];
+  // Map converted PDF File → original image File (for documents generated from images).
+  const originalImages = new Map<File, File>();
   let completed = 0;
 
   // Phase 1: Validate and convert images to PDFs
@@ -35,8 +47,9 @@ export async function importFiles(
       validateImportFile(file);
 
       if (isImageFile(file)) {
-        const result = await convertImageToPdf(file);
+        const result = await convertImageToPdf(file, imageSettings);
         pdfFiles.push(result.pdfFile);
+        originalImages.set(result.pdfFile, file);
       } else {
         pdfFiles.push(file);
       }
@@ -52,9 +65,19 @@ export async function importFiles(
     return { imported: [], errors };
   }
 
-  const pdfResult = await importPdfFiles(pdfFiles, (pdfCompleted, _pdfTotal) => {
-    onProgress?.(completed + pdfCompleted, files.length);
-  });
+  const pdfResult = await importPdfFilesInternal(
+    pdfFiles,
+    (pdfCompleted, _pdfTotal) => {
+      onProgress?.(completed + pdfCompleted, files.length);
+    },
+    (file) => {
+      const original = originalImages.get(file);
+      if (!original) {
+        return undefined;
+      }
+      return { originalImageFile: original, imageFitSettings: imageSettings };
+    },
+  );
 
   return {
     imported: pdfResult.imported,
@@ -65,6 +88,14 @@ export async function importFiles(
 export async function importPdfFiles(
   files: File[],
   onProgress?: (completed: number, total: number) => void,
+): Promise<ImportResult> {
+  return importPdfFilesInternal(files, onProgress);
+}
+
+async function importPdfFilesInternal(
+  files: File[],
+  onProgress?: (completed: number, total: number) => void,
+  metaForFile?: (file: File) => Pick<ImportedDocument, 'originalImageFile' | 'imageFitSettings'> | undefined,
 ): Promise<ImportResult> {
   const worker = new Worker(new URL('../workers/ingest.worker.ts', import.meta.url), { type: 'module' });
   const imported: ImportedDocument[] = [];
@@ -86,10 +117,12 @@ export async function importPdfFiles(
           };
           const documentId = createId('document');
           const payload = await inspectWithWorker(worker, { documentId, file });
+          const extra = metaForFile?.(file) ?? {};
           imported.push({
             sourceFile,
             payload,
             sourceUrl: makeObjectUrl(file),
+            ...extra,
           });
         } catch (error) {
           errors.push({ fileName: file.name, error: toErrorModel(error) });
@@ -104,6 +137,29 @@ export async function importPdfFiles(
   }
 
   return { imported, errors };
+}
+
+/**
+ * Re-converts an image with new format/orientation settings and ingests the
+ * resulting PDF, returning a single ImportedDocument. Caller is responsible
+ * for swapping it into the workspace and revoking the old object URL.
+ */
+export async function reconvertImageDocument(
+  originalImage: File,
+  imageSettings: ImageImportSettings,
+): Promise<ImportedDocument> {
+  const result = await convertImageToPdf(originalImage, imageSettings);
+  const ingest = await importPdfFilesInternal(
+    [result.pdfFile],
+    undefined,
+    () => ({ originalImageFile: originalImage, imageFitSettings: imageSettings }),
+  );
+  const first = ingest.imported[0];
+  if (!first) {
+    const issue = ingest.errors[0];
+    throw issue ? new Error(issue.error.message) : new Error('Failed to re-convert image.');
+  }
+  return first;
 }
 
 function inspectWithWorker(
