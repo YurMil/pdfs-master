@@ -36,7 +36,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.DEPLOY_TOKEN }}
         with:
           source-directory: 'static/utilities/pdf-master'
-          destination-github-username: 'biosxxx'
+          destination-github-username: 'YurMil'
           destination-repository-name: 'cadautoscript.com'
           target-directory: 'static/utility-apps/pdf-master'
           user-email: 'bot@react-table-editor.com'

@@ -65,7 +65,7 @@ export function DocumentList({
         {collapsed ? (
           <button
             type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text-muted)]"
             onClick={onToggleCollapse}
             title="Expand documents pane"
           >
@@ -74,12 +74,12 @@ export function DocumentList({
         ) : (
           <>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Documents</p>
-              <p className="mt-1 text-xs text-slate-500">Drag to reorder source files</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">Documents</p>
+              <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">Drag to reorder source files</p>
             </div>
             <button
               type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text-muted)]"
               onClick={onToggleCollapse}
               title="Collapse documents pane"
             >
@@ -103,7 +103,7 @@ export function DocumentList({
                   collapsed ? 'p-1.5' : 'p-3',
                   isActive
                     ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent-soft)] shadow-sm'
-                    : 'border-transparent bg-white hover:border-slate-300',
+                    : 'border-transparent bg-[color:var(--pm-surface)] hover:border-[color:var(--pm-border)]',
                 )}
                 onDragStart={(event) => {
                   event.dataTransfer.effectAllowed = 'move';
@@ -146,31 +146,31 @@ export function DocumentList({
                     className="flex w-full flex-col items-center gap-1 rounded-lg px-1 py-2 text-center"
                     onClick={() => onActivate(document.id)}
                   >
-                    <span className={clsx("flex items-center justify-center rounded-lg bg-slate-950 font-semibold text-white", document.name.length > 30 ? "h-9 w-9 text-[10px]" : "h-10 w-10 text-xs")}>
+                    <span className={clsx("flex items-center justify-center rounded-lg bg-[color:var(--pm-surface-strong)] font-semibold text-[color:var(--pm-on-surface-strong)]", document.name.length > 30 ? "h-9 w-9 text-[10px]" : "h-10 w-10 text-xs")}>
                       {getInitials(document.name)}
                     </span>
-                    <span className="text-[10px] font-medium text-slate-500">{document.pageCount}p</span>
+                    <span className="text-[10px] font-medium text-[color:var(--pm-text-muted)]">{document.pageCount}p</span>
                   </button>
                 ) : (
                   <>
                     <button type="button" className="w-full text-left" onClick={() => onActivate(document.id)}>
                       <div className="flex items-start gap-3">
-                        <span className={clsx("mt-0.5 flex shrink-0 items-center justify-center rounded-lg bg-slate-950 font-semibold text-white", document.name.length > 30 ? "h-8 w-8 text-[10px]" : "h-9 w-9 text-xs")}>
+                        <span className={clsx("mt-0.5 flex shrink-0 items-center justify-center rounded-lg bg-[color:var(--pm-surface-strong)] font-semibold text-[color:var(--pm-on-surface-strong)]", document.name.length > 30 ? "h-8 w-8 text-[10px]" : "h-9 w-9 text-xs")}>
                           {getInitials(document.name)}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <h3 className={clsx("font-semibold text-slate-900 break-all line-clamp-3", document.name.length > 30 ? "text-xs leading-snug" : "text-sm")}>{document.name}</h3>
-                              <p className="mt-1 text-xs text-slate-500">
+                              <h3 className={clsx("font-semibold text-[color:var(--pm-text-strong)] break-all line-clamp-3", document.name.length > 30 ? "text-xs leading-snug" : "text-sm")}>{document.name}</h3>
+                              <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">
                                 {document.pageCount} pages · {document.hasForms ? `${document.formFields.length} fields` : 'No forms'}
                               </p>
                             </div>
                             <span className={clsx(
                               'rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
                               isActive
-                                ? 'bg-[color:var(--pm-accent)] text-white'
-                                : 'bg-slate-100 text-slate-500',
+                                ? 'bg-[color:var(--pm-accent)] text-[color:var(--pm-on-accent)]'
+                                : 'bg-[color:var(--pm-surface-hover)] text-[color:var(--pm-text-muted)]',
                             )}>
                               {document.status === 'success' ? 'Ready' : document.status}
                             </span>
@@ -191,10 +191,10 @@ export function DocumentList({
           })
         ) : (
           <div className={clsx(
-            'rounded-xl border border-dashed text-slate-500 transition',
+            'rounded-xl border border-dashed text-[color:var(--pm-text-muted)] transition',
             externalDragOver
               ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent-soft)]/50'
-              : 'border-slate-300',
+              : 'border-[color:var(--pm-border)]',
             collapsed ? 'px-2 py-4 text-center text-[10px]' : 'px-3 py-4 text-sm',
           )}>
             {collapsed
@@ -226,10 +226,10 @@ function MiniAction({
       className={clsx(
         'rounded-lg border px-2 py-1 text-[11px] font-medium transition',
         tone === 'accent'
-          ? 'border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
+          ? 'border-[color:var(--pm-accent)]/40 bg-[color:var(--pm-accent-soft)] text-[color:var(--pm-accent-strong)] hover:bg-[color:var(--pm-accent-soft)]'
           : tone === 'danger'
-            ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-            : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200',
+            ? 'border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger-surface)] text-[color:var(--pm-danger-text)] hover:bg-[color:var(--pm-danger-surface-hover)]'
+            : 'border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)] text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]',
       )}
     >
       {label}

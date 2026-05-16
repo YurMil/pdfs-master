@@ -1,19 +1,106 @@
 @import "tailwindcss";
 
-:root {
+:root,
+html[data-theme='light'] {
   color-scheme: light;
   font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
-  background:
+
+  --pm-bg-gradient:
     linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)),
     linear-gradient(180deg, #dde3ea 0%, #e6ebf2 40%, #edf1f5 100%);
-  color: #0f172a;
+
   --pm-shell: rgba(237, 242, 247, 0.94);
   --pm-panel: #f5f7fa;
   --pm-workspace: #eef2f6;
+
+  --pm-surface: #ffffff;
+  --pm-surface-hover: #f1f5f9;
+  --pm-surface-muted: #f8fafc;
+  --pm-surface-strong: #0f172a;
+  --pm-on-surface-strong: #ffffff;
+
+  --pm-text-strong: #0f172a;
+  --pm-text: #334155;
+  --pm-text-muted: #64748b;
+  --pm-text-faint: #94a3b8;
+
   --pm-border: rgba(15, 23, 42, 0.1);
+  --pm-border-subtle: rgba(15, 23, 42, 0.06);
+  --pm-border-strong: #94a3b8;
+
   --pm-accent: #2563eb;
   --pm-accent-strong: #1d4ed8;
   --pm-accent-soft: rgba(37, 99, 235, 0.08);
+  --pm-on-accent: #ffffff;
+
+  --pm-danger: #e11d48;
+  --pm-danger-strong: #be123c;
+  --pm-danger-surface: #fff1f2;
+  --pm-danger-surface-hover: #ffe4e6;
+  --pm-danger-border: #fecdd3;
+  --pm-danger-text: #be123c;
+
+  --pm-success: #16a34a;
+  --pm-warning: #d97706;
+
+  --pm-overlay: rgba(15, 23, 42, 0.45);
+  --pm-scrollbar-thumb: rgba(100, 116, 139, 0.4);
+  --pm-selection: rgba(37, 99, 235, 0.16);
+  --pm-focus: var(--pm-accent-strong);
+
+  background: var(--pm-bg-gradient);
+  color: var(--pm-text-strong);
+}
+
+html.dark,
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --pm-bg-gradient:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.55)),
+    linear-gradient(180deg, #0b1220 0%, #0f172a 45%, #111827 100%);
+
+  --pm-shell: rgba(15, 23, 42, 0.92);
+  --pm-panel: #111827;
+  --pm-workspace: #0f172a;
+
+  --pm-surface: #1e293b;
+  --pm-surface-hover: #273449;
+  --pm-surface-muted: #18243a;
+  --pm-surface-strong: #e2e8f0;
+  --pm-on-surface-strong: #0f172a;
+
+  --pm-text-strong: #f1f5f9;
+  --pm-text: #cbd5e1;
+  --pm-text-muted: #94a3b8;
+  --pm-text-faint: #64748b;
+
+  --pm-border: rgba(148, 163, 184, 0.18);
+  --pm-border-subtle: rgba(148, 163, 184, 0.1);
+  --pm-border-strong: #475569;
+
+  --pm-accent: #3b82f6;
+  --pm-accent-strong: #60a5fa;
+  --pm-accent-soft: rgba(59, 130, 246, 0.18);
+  --pm-on-accent: #0b1220;
+
+  --pm-danger: #f87171;
+  --pm-danger-strong: #fca5a5;
+  --pm-danger-surface: rgba(244, 63, 94, 0.14);
+  --pm-danger-surface-hover: rgba(244, 63, 94, 0.22);
+  --pm-danger-border: rgba(244, 63, 94, 0.45);
+  --pm-danger-text: #fecdd3;
+
+  --pm-success: #4ade80;
+  --pm-warning: #fbbf24;
+
+  --pm-overlay: rgba(2, 6, 23, 0.65);
+  --pm-scrollbar-thumb: rgba(148, 163, 184, 0.35);
+  --pm-selection: rgba(96, 165, 250, 0.28);
+  --pm-focus: var(--pm-accent-strong);
+
+  background: var(--pm-bg-gradient);
+  color: var(--pm-text-strong);
 }
 
 html,
@@ -25,6 +112,7 @@ body,
 body {
   margin: 0;
   background: inherit;
+  color: var(--pm-text-strong);
 }
 
 button,
@@ -32,12 +120,13 @@ input,
 select,
 textarea {
   font: inherit;
+  color: inherit;
 }
 
 input,
 select,
 textarea {
-  outline-color: var(--pm-accent-strong);
+  outline-color: var(--pm-focus);
 }
 
 * {
@@ -52,7 +141,7 @@ textarea {
 *::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
-  background: rgba(100, 116, 139, 0.4);
+  background: var(--pm-scrollbar-thumb);
   background-clip: padding-box;
 }
 
@@ -61,5 +150,5 @@ textarea {
 }
 
 ::selection {
-  background: rgba(37, 99, 235, 0.16);
+  background: var(--pm-selection);
 }

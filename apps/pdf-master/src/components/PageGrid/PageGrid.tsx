@@ -74,10 +74,10 @@ export function PageGrid({
     <div className="flex h-full flex-col bg-[color:var(--pm-panel)]">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--pm-border)] bg-[color:var(--pm-panel)]/96 px-4 py-3 backdrop-blur-sm">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Workspace</p>
-          <p className="mt-1 text-xs text-slate-500">Dense page canvas for reordering, inspection, and selection.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">Workspace</p>
+          <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">Dense page canvas for reordering, inspection, and selection.</p>
         </div>
-        <span className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-medium text-slate-600">
+        <span className="rounded-md border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 py-1 text-[11px] font-medium text-[color:var(--pm-text-muted)]">
           {groups.reduce((total, group) => total + group.pages.length, 0)} visible pages
         </span>
       </div>
@@ -91,11 +91,11 @@ export function PageGrid({
                   <div className="flex items-center gap-3">
                     <span className={clsx(
                       'h-2.5 w-2.5 rounded-full',
-                      activeDocumentId === document.id ? 'bg-[color:var(--pm-accent-strong)]' : 'bg-slate-300',
+                      activeDocumentId === document.id ? 'bg-[color:var(--pm-accent-strong)]' : 'bg-[color:var(--pm-border)]',
                     )} />
                     <div className="min-w-0">
-                      <h2 className="truncate text-sm font-semibold text-slate-900">{document.name}</h2>
-                      <p className="text-xs text-slate-500">{pages.length} pages · drag anywhere to reorder</p>
+                      <h2 className="truncate text-sm font-semibold text-[color:var(--pm-text-strong)]">{document.name}</h2>
+                      <p className="text-xs text-[color:var(--pm-text-muted)]">{pages.length} pages · drag anywhere to reorder</p>
                     </div>
                   </div>
                 </button>
@@ -103,12 +103,12 @@ export function PageGrid({
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-2 py-1 text-[11px] font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
                     onClick={() => onSelectAllInDocument(document.id)}
                   >
                     Select all
                   </button>
-                  <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">{document.pageCount} total</span>
+                  <span className="rounded-md bg-[color:var(--pm-surface-hover)] px-2 py-1 text-[11px] font-medium text-[color:var(--pm-text-muted)]">{document.pageCount} total</span>
                 </div>
               </div>
 
@@ -246,11 +246,11 @@ function PageCard({
         ref={containerRef}
         draggable
         className={clsx(
-          'group rounded-xl border bg-white transition',
+          'group rounded-xl border bg-[color:var(--pm-surface)] transition',
           isList ? 'flex items-center gap-3 p-2.5' : 'p-2.5',
           selected
             ? 'border-[color:var(--pm-accent-strong)] shadow-[0_0_0_1px_rgba(37,99,235,0.12)]'
-            : 'border-slate-200 hover:border-slate-300',
+            : 'border-[color:var(--pm-border-subtle)] hover:border-[color:var(--pm-border)]',
           externalDropPosition && 'ring-2 ring-[color:var(--pm-accent)]/25',
         )}
         onDragStart={(event) => {
@@ -292,7 +292,7 @@ function PageCard({
             role="button"
             tabIndex={0}
             className={clsx(
-              'group/preview relative flex w-full items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50',
+              'group/preview relative flex w-full items-center justify-center overflow-hidden rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)]',
               isList ? 'h-28 w-[86px] shrink-0' : previewFrameClasses[thumbnailDensity],
             )}
             onClick={(event) => {
@@ -313,7 +313,7 @@ function PageCard({
             }}
           >
             <ThumbnailPreview thumbnail={thumbnail} rotation={page.rotation} />
-            <span className="absolute left-1.5 top-1.5 rounded-md bg-slate-950/85 px-1.5 py-0.5 text-[10px] font-medium text-white">
+            <span className="absolute left-1.5 top-1.5 rounded-md bg-[color:var(--pm-surface-strong)] px-1.5 py-0.5 text-[10px] font-medium text-[color:var(--pm-on-surface-strong)]">
               {page.sourcePageIndex + 1}
             </span>
             <button
@@ -323,8 +323,8 @@ function PageCard({
               className={clsx(
                 'absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border shadow-sm transition',
                 selected
-                  ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent)] text-white'
-                  : 'border-slate-300 bg-white/95 text-slate-600 hover:border-[color:var(--pm-accent-strong)] hover:text-[color:var(--pm-accent-strong)]',
+                  ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent)] text-[color:var(--pm-on-accent)]'
+                  : 'border-[color:var(--pm-border)] bg-[color:var(--pm-surface)]/95 text-[color:var(--pm-text-muted)] hover:border-[color:var(--pm-accent-strong)] hover:text-[color:var(--pm-accent-strong)]',
               )}
               onClick={(event) => {
                 event.stopPropagation();
@@ -333,7 +333,7 @@ function PageCard({
             >
               <SelectionIcon selected={selected} />
             </button>
-            <span className="pointer-events-none absolute inset-x-2 bottom-2 rounded-md bg-slate-950/75 px-2 py-1 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-white opacity-0 transition group-hover/preview:opacity-100">
+            <span className="pointer-events-none absolute inset-x-2 bottom-2 rounded-md bg-[color:var(--pm-overlay)] px-2 py-1 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--pm-on-surface-strong)] opacity-0 transition group-hover/preview:opacity-100">
               Open viewer
             </span>
           </div>
@@ -348,9 +348,9 @@ function PageCard({
               })
             }
           >
-            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{document.name}</p>
-            <p className="mt-1 truncate text-sm font-semibold text-slate-900">{page.label}</p>
-            <p className="mt-1 text-xs text-slate-500">Original page {page.sourcePageIndex + 1} · Rotation {page.rotation}°</p>
+            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--pm-text-muted)]">{document.name}</p>
+            <p className="mt-1 truncate text-sm font-semibold text-[color:var(--pm-text-strong)]">{page.label}</p>
+            <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">Original page {page.sourcePageIndex + 1} · Rotation {page.rotation}°</p>
           </button>
         </div>
 
@@ -383,7 +383,7 @@ function PageCard({
 function ThumbnailPreview({ thumbnail, rotation }: { thumbnail?: ThumbnailState; rotation: number }) {
   if (thumbnail?.status === 'ready' && thumbnail.url) {
     return (
-      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-white p-2">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[color:var(--pm-surface)] p-2">
         <img
           src={thumbnail.url}
           alt="PDF page thumbnail"
@@ -397,10 +397,10 @@ function ThumbnailPreview({ thumbnail, rotation }: { thumbnail?: ThumbnailState;
   }
 
   if (thumbnail?.status === 'error') {
-    return <div className="flex h-full w-full items-center justify-center px-3 text-center text-[10px] uppercase tracking-[0.18em] text-rose-500">Render failed</div>;
+    return <div className="flex h-full w-full items-center justify-center px-3 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--pm-danger-text)]">Render failed</div>;
   }
 
-  return <div className="flex h-full w-full items-center justify-center px-3 text-center text-[10px] uppercase tracking-[0.18em] text-slate-400">Rendering</div>;
+  return <div className="flex h-full w-full items-center justify-center px-3 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--pm-text-faint)]">Rendering</div>;
 }
 
 function SelectionIcon({ selected }: { selected: boolean }) {
@@ -431,8 +431,8 @@ function PageActionButton({
       className={clsx(
         'inline-flex h-7 w-7 items-center justify-center rounded-lg border transition',
         tone === 'danger'
-          ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-          : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200',
+          ? 'border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger-surface)] text-[color:var(--pm-danger-text)] hover:bg-[color:var(--pm-danger-surface-hover)]'
+          : 'border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)] text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]',
       )}
       onClick={onClick}
     >

@@ -78,12 +78,12 @@ export function Toolbar({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="truncate text-sm font-semibold text-slate-950">PDF Master</h1>
-              <span className="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <h1 className="truncate text-sm font-semibold text-[color:var(--pm-text-strong)]">PDF Master</h1>
+              <span className="rounded-md border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">
                 Editor
               </span>
             </div>
-            <p className="truncate text-xs text-slate-500">
+            <p className="truncate text-xs text-[color:var(--pm-text-muted)]">
               {hasWorkspace
                 ? `${documentCount} document${documentCount === 1 ? '' : 's'} · ${pageCount} page${pageCount === 1 ? '' : 's'}${activeDocumentName ? ` · ${activeDocumentName}` : ''}`
                 : 'Local PDF workspace'}
@@ -100,12 +100,12 @@ export function Toolbar({
         </div>
 
         <div className="ml-auto flex flex-1 flex-wrap items-center justify-end gap-2 xl:flex-nowrap">
-          <label className="flex h-9 min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-600 xl:max-w-[240px] xl:flex-none">
+          <label className="flex h-9 min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 text-sm text-[color:var(--pm-text-muted)] xl:max-w-[240px] xl:flex-none">
             <SearchIcon />
             <input
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              className="w-full border-0 bg-transparent p-0 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              className="w-full border-0 bg-transparent p-0 text-sm text-[color:var(--pm-text-strong)] outline-none placeholder:text-[color:var(--pm-text-faint)]"
               placeholder="Search pages"
             />
           </label>
@@ -128,8 +128,8 @@ export function Toolbar({
           />
 
           {selectedCount ? (
-            <div className="flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-2 py-1.5">
-              <span className="px-1 text-xs font-medium text-slate-500">{selectedCount} selected</span>
+            <div className="flex items-center gap-1 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 py-1.5">
+              <span className="px-1 text-xs font-medium text-[color:var(--pm-text-muted)]">{selectedCount} selected</span>
               <IconButton label="Rotate" title="Rotate selected pages" onClick={onRotate}>
                 <RotateIcon />
               </IconButton>
@@ -154,8 +154,8 @@ export function Toolbar({
         </div>
       </div>
 
-      <div className="flex min-h-8 items-center gap-3 border-t border-[var(--pm-border)] px-3 py-1.5 text-xs text-slate-500 sm:px-4">
-        <span className="font-medium text-slate-700">Workspace</span>
+      <div className="flex min-h-8 items-center gap-3 border-t border-[var(--pm-border)] px-3 py-1.5 text-xs text-[color:var(--pm-text-muted)] sm:px-4">
+        <span className="font-medium text-[color:var(--pm-text)]">Workspace</span>
         <span>Click to select</span>
         <span>Use the circle icon on a thumbnail to mark exact pages</span>
         <span>Shift-click for range</span>
@@ -185,8 +185,8 @@ function PrimaryActionButton({
       className={clsx(
         'inline-flex h-9 items-center rounded-xl border px-3 text-sm font-medium transition',
         active
-          ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent)] text-white shadow-sm'
-          : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50',
+          ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent)] text-[color:var(--pm-on-accent)] shadow-sm'
+          : 'border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text)] hover:border-[color:var(--pm-border-strong)] hover:bg-[color:var(--pm-surface-hover)]',
         disabled && 'cursor-not-allowed opacity-45',
       )}
     >
@@ -207,7 +207,7 @@ function SegmentedControl<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="inline-flex h-9 items-center rounded-xl border border-slate-300 bg-white p-1" aria-label={label}>
+    <div className="inline-flex h-9 items-center rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] p-1" aria-label={label}>
       {options.map((option) => (
         <button
           key={option.value}
@@ -215,8 +215,8 @@ function SegmentedControl<T extends string>({
           className={clsx(
             'rounded-lg px-2.5 py-1 text-xs font-medium transition',
             option.value === value
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100',
+              ? 'bg-[color:var(--pm-surface-strong)] text-[color:var(--pm-on-surface-strong)] shadow-sm'
+              : 'text-[color:var(--pm-text-muted)] hover:bg-[color:var(--pm-surface-hover)]',
           )}
           onClick={() => onChange(option.value)}
         >
@@ -254,10 +254,10 @@ function IconButton({
       className={clsx(
         'inline-flex h-8 w-8 items-center justify-center rounded-lg border transition',
         tone === 'danger'
-          ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+          ? 'border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger-surface)] text-[color:var(--pm-danger-text)] hover:bg-[color:var(--pm-danger-surface-hover)]'
           : active
             ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent-soft)] text-[color:var(--pm-accent-strong)]'
-            : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-100',
+            : 'border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text-muted)] hover:bg-[color:var(--pm-surface-hover)]',
         disabled && 'cursor-not-allowed opacity-45',
       )}
     >

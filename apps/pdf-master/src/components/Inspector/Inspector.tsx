@@ -14,8 +14,8 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
     return (
       <div className="flex h-full flex-col bg-[color:var(--pm-panel)]">
         <div className="border-b border-[var(--pm-border)] px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Inspector</p>
-          <p className="mt-1 text-xs text-slate-500">Select a document to review metadata and editable fields.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">Inspector</p>
+          <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">Select a document to review metadata and editable fields.</p>
         </div>
       </div>
     );
@@ -27,15 +27,15 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
   return (
     <div className="flex h-full flex-col bg-[color:var(--pm-panel)]">
       <div className="border-b border-[var(--pm-border)] px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Inspector</p>
-        <h2 className={clsx("mt-1 font-semibold text-slate-900 break-all", document.name.length > 40 ? "text-xs leading-snug" : "text-sm")}>{document.name}</h2>
-        <p className="mt-1 text-xs text-slate-500">{document.pageCount} pages · {document.hasForms ? `${completedFields}/${document.formFields.length} fields filled` : 'No form fields detected'}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">Inspector</p>
+        <h2 className={clsx("mt-1 font-semibold text-[color:var(--pm-text-strong)] break-all", document.name.length > 40 ? "text-xs leading-snug" : "text-sm")}>{document.name}</h2>
+        <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">{document.pageCount} pages · {document.hasForms ? `${completedFields}/${document.formFields.length} fields filled` : 'No form fields detected'}</p>
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-3 py-2.5">
-            <h3 className="text-sm font-semibold text-slate-900">File info</h3>
+        <section className="rounded-xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)]">
+          <div className="border-b border-[color:var(--pm-border-subtle)] px-3 py-2.5">
+            <h3 className="text-sm font-semibold text-[color:var(--pm-text-strong)]">File info</h3>
           </div>
           <div className="space-y-2 px-3 py-3 text-sm">
             <InfoRow label="Status" value={document.status === 'success' ? 'Ready' : document.status} />
@@ -45,11 +45,11 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-3 py-2.5">
+        <section className="rounded-xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)]">
+          <div className="border-b border-[color:var(--pm-border-subtle)] px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-slate-900">Metadata</h3>
-              <label className="flex items-center gap-2 text-xs text-slate-600">
+              <h3 className="text-sm font-semibold text-[color:var(--pm-text-strong)]">Metadata</h3>
+              <label className="flex items-center gap-2 text-xs text-[color:var(--pm-text-muted)]">
                 <input
                   type="checkbox"
                   checked={document.flattenForms}
@@ -66,15 +66,15 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-3 py-2.5">
-            <h3 className="text-sm font-semibold text-slate-900">Form fields</h3>
+        <section className="rounded-xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)]">
+          <div className="border-b border-[color:var(--pm-border-subtle)] px-3 py-2.5">
+            <h3 className="text-sm font-semibold text-[color:var(--pm-text-strong)]">Form fields</h3>
           </div>
           <div className="space-y-3 px-3 py-3">
             {document.formFields.length ? (
               document.formFields.map((field) => <FormFieldEditor key={field.name} field={field} onChange={onFieldChange} />)
             ) : (
-              <p className="text-sm text-slate-500">No editable AcroForm fields in this document.</p>
+              <p className="text-sm text-[color:var(--pm-text-muted)]">No editable AcroForm fields in this document.</p>
             )}
           </div>
         </section>
@@ -86,8 +86,8 @@ export function Inspector({ document, onFieldChange, onFlattenToggle }: Inspecto
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="shrink-0 text-slate-500">{label}</span>
-      <span className={clsx("text-right font-medium text-slate-900 break-all", value.length > 30 ? "text-xs leading-snug" : "text-sm")}>{value}</span>
+      <span className="shrink-0 text-[color:var(--pm-text-muted)]">{label}</span>
+      <span className={clsx("text-right font-medium text-[color:var(--pm-text-strong)] break-all", value.length > 30 ? "text-xs leading-snug" : "text-sm")}>{value}</span>
     </div>
   );
 }
@@ -95,10 +95,10 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function FormFieldEditor({ field, onChange }: { field: FormFieldModel; onChange: (fieldName: string, value: FormFieldValue) => void }) {
   const baseLabel = (
     <div className="mb-1.5 flex items-center justify-between gap-3">
-      <label className="text-sm font-medium text-slate-900" htmlFor={field.name}>
+      <label className="text-sm font-medium text-[color:var(--pm-text-strong)]" htmlFor={field.name}>
         {field.label}
       </label>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{field.kind}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--pm-text-faint)]">{field.kind}</span>
     </div>
   );
 
@@ -106,7 +106,7 @@ function FormFieldEditor({ field, onChange }: { field: FormFieldModel; onChange:
     return (
       <div>
         {baseLabel}
-        <label className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700">
+        <label className="flex items-center gap-3 rounded-lg border border-[color:var(--pm-border-subtle)] px-3 py-2.5 text-sm text-[color:var(--pm-text)]">
           <input
             id={field.name}
             type="checkbox"
@@ -126,7 +126,7 @@ function FormFieldEditor({ field, onChange }: { field: FormFieldModel; onChange:
         {baseLabel}
         <select
           id={field.name}
-          className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+          className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
           value={typeof field.value === 'string' ? field.value : ''}
           disabled={field.readOnly}
           onChange={(event) => onChange(field.name, event.target.value)}
@@ -148,7 +148,7 @@ function FormFieldEditor({ field, onChange }: { field: FormFieldModel; onChange:
         {baseLabel}
         <div className="flex flex-wrap gap-2">
           {field.options?.map((option) => (
-            <label key={option} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+            <label key={option} className="flex items-center gap-2 rounded-lg border border-[color:var(--pm-border-subtle)] px-3 py-2 text-sm text-[color:var(--pm-text)]">
               <input
                 type="radio"
                 name={field.name}
@@ -173,7 +173,7 @@ function FormFieldEditor({ field, onChange }: { field: FormFieldModel; onChange:
         <select
           id={field.name}
           multiple
-          className="min-h-28 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+          className="min-h-28 w-full rounded-lg border border-[color:var(--pm-border-subtle)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
           value={selectedValues}
           disabled={field.readOnly}
           onChange={(event) =>
@@ -199,7 +199,7 @@ function FormFieldEditor({ field, onChange }: { field: FormFieldModel; onChange:
       <input
         id={field.name}
         type="text"
-        className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900"
+        className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
         value={typeof field.value === 'string' ? field.value : ''}
         disabled={field.readOnly || field.kind === 'unsupported'}
         onChange={(event) => onChange(field.name, event.target.value)}

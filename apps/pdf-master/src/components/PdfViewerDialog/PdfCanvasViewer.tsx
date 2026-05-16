@@ -268,39 +268,39 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
   const contentHeight = pageLayout.length ? pageLayout[pageLayout.length - 1]!.top + pageLayout[pageLayout.length - 1]!.height + PAGE_GAP_PX : 0;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-slate-200">
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-4 py-3">
-        <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-sm font-medium text-slate-700">
+    <div className="flex min-h-0 flex-1 flex-col bg-[color:var(--pm-border-subtle)]">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-4 py-3">
+        <div className="rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)] px-2.5 py-1 text-sm font-medium text-[color:var(--pm-text)]">
           Page {currentPageNumber} / {Math.max(totalPages, 1)}
         </div>
-        <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
+        <div className="flex items-center gap-1 rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] p-1">
           <ViewerToolbarButton label="Zoom out" disabled={!canZoomOut} onClick={() => setZoomPercent((current) => Math.max(60, current - 10))}>
             -
           </ViewerToolbarButton>
-          <div className="min-w-[64px] text-center text-sm font-medium text-slate-700">{zoomPercent}%</div>
+          <div className="min-w-[64px] text-center text-sm font-medium text-[color:var(--pm-text)]">{zoomPercent}%</div>
           <ViewerToolbarButton label="Zoom in" disabled={!canZoomIn} onClick={() => setZoomPercent((current) => Math.min(180, current + 10))}>
             +
           </ViewerToolbarButton>
         </div>
         <button
           type="button"
-          className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-1.5 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
           onClick={() => setZoomPercent(100)}
         >
           Fit width
         </button>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-[color:var(--pm-text-muted)]">
           Optimized canvas viewer. HWA: {environment.supportsHardwareAcceleration ? 'on' : 'off'} · parallel renders:{' '}
           {resolveViewerRenderConcurrency(environment.hardwareConcurrency)}
         </span>
       </div>
 
       {documentState.status === 'loading' ? (
-        <div className="flex h-full items-center justify-center px-6 text-sm text-slate-500">Loading PDF pages…</div>
+        <div className="flex h-full items-center justify-center px-6 text-sm text-[color:var(--pm-text-muted)]">Loading PDF pages…</div>
       ) : documentState.status === 'error' ? (
         <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-          <h4 className="text-base font-semibold text-slate-900">Viewer could not be opened</h4>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">{documentState.error}</p>
+          <h4 className="text-base font-semibold text-[color:var(--pm-text-strong)]">Viewer could not be opened</h4>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-[color:var(--pm-text-muted)]">{documentState.error}</p>
         </div>
       ) : (
         <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
@@ -331,7 +331,7 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
                       renderQueue={renderQueueRef.current}
                       enableHardwareAcceleration={environment.supportsHardwareAcceleration}
                       className={clsx(
-                        currentPageNumber === index + 1 && 'ring-2 ring-[color:var(--pm-accent-strong)] ring-offset-2 ring-offset-slate-200',
+                        currentPageNumber === index + 1 && 'ring-2 ring-[color:var(--pm-accent-strong)] ring-offset-2 ring-offset-[color:var(--pm-border-subtle)]',
                       )}
                     />
                   </div>
@@ -339,7 +339,7 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
               })}
             </div>
           ) : (
-            <div className="flex h-full min-h-[320px] items-center justify-center rounded-2xl border border-slate-300/70 bg-white/55 text-sm text-slate-500">
+            <div className="flex h-full min-h-[320px] items-center justify-center rounded-2xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)]/60 text-sm text-[color:var(--pm-text-muted)]">
               Preparing page layout…
             </div>
           )}
@@ -463,10 +463,10 @@ function ViewerPage({
   }, [devicePixelRatio, enableHardwareAcceleration, pageIndex, pdfDocument, renderQueue, scale, shouldRender]);
 
   return (
-    <div className={clsx('relative h-full w-full overflow-hidden rounded-xl bg-white shadow-[0_18px_40px_rgba(15,23,42,0.14)]', className)}>
-      <canvas ref={canvasRef} className="block h-full w-full bg-white" />
+    <div className={clsx('relative h-full w-full overflow-hidden rounded-xl bg-[color:var(--pm-surface)] shadow-[0_18px_40px_rgba(15,23,42,0.14)]', className)}>
+      <canvas ref={canvasRef} className="block h-full w-full bg-[color:var(--pm-surface)]" />
       {status !== 'ready' ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-100/92 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[color:var(--pm-surface-hover)] text-xs font-medium uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">
           {status === 'error' ? `Page ${pageNumber} failed` : `Page ${pageNumber} rendering`}
         </div>
       ) : null}
@@ -491,7 +491,7 @@ function ViewerToolbarButton({
       aria-label={label}
       title={label}
       disabled={disabled}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] text-base font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40"
       onClick={onClick}
     >
       {children}

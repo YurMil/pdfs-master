@@ -625,7 +625,7 @@ export function App() {
       </WorkspaceDropOverlay>
 
       {documentsSheetOpen ? (
-        <div className="fixed inset-0 z-40 bg-slate-950/28 backdrop-blur-[1px] xl:hidden" onClick={() => setDocumentsSheetOpen(false)}>
+        <div className="fixed inset-0 z-40 bg-[color:var(--pm-overlay)] backdrop-blur-[1px] xl:hidden" onClick={() => setDocumentsSheetOpen(false)}>
           <div className="h-full w-[280px] max-w-[85vw] border-r border-[var(--pm-border)] bg-[color:var(--pm-panel)] shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <DocumentList
               documents={orderedDocuments}
@@ -653,7 +653,7 @@ export function App() {
       ) : null}
 
       {inspectorOpen && activeDocument ? (
-        <div className="fixed inset-0 z-40 bg-slate-950/28 backdrop-blur-[1px] xl:hidden" onClick={() => setInspectorOpen(false)}>
+        <div className="fixed inset-0 z-40 bg-[color:var(--pm-overlay)] backdrop-blur-[1px] xl:hidden" onClick={() => setInspectorOpen(false)}>
           <div className="ml-auto h-full w-[340px] max-w-[92vw] border-l border-[var(--pm-border)] bg-[color:var(--pm-panel)] shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <Inspector
               document={activeDocument}
