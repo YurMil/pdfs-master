@@ -283,6 +283,7 @@ export function App() {
         pageId: page.id,
         documentId: document.id,
         sourceFile: document.sourceFile.file,
+        sourceUrl: document.sourceUrl,
         pageIndex: page.sourcePageIndex,
         maxWidth: thumbnailMaxWidth[thumbnailDensity],
       });
@@ -294,6 +295,14 @@ export function App() {
       usePdfStore.getState().setThumbnailState(page.id, { status: 'error', error: toErrorModel(error) });
     }
   };
+
+  const handleCancelThumbnail = useCallback((pageId: string) => {
+    const current = usePdfStore.getState().thumbnails[pageId];
+    if (current?.status === 'loading' || current?.status === 'queued') {
+      thumbnailQueue.cancelPage(pageId);
+      usePdfStore.getState().setThumbnailState(pageId, { status: 'idle' });
+    }
+  }, [thumbnailQueue]);
 
   const handleExport = async () => {
     const snapshot = usePdfStore.getState();
@@ -640,6 +649,7 @@ export function App() {
                   }
                   onOpenViewer={handleOpenViewer}
                   onRequestThumbnail={handleRequestThumbnail}
+                  onInvisible={handleCancelThumbnail}
                   onRotatePage={(pageId) => {
                     usePdfStore.getState().selectPage(pageId);
                     usePdfStore.getState().rotateSelectedPages();

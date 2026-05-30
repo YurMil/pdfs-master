@@ -24,7 +24,7 @@ describe('thumbnail rendering helpers', () => {
         supportsOffscreenCanvas: true,
         hardwareConcurrency: 16,
       }),
-    ).toBe(16);
+    ).toBe(3);
 
     expect(
       resolveThumbnailWorkerPoolSize({

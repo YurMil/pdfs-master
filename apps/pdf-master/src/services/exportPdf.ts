@@ -52,7 +52,7 @@ export async function runExport(
     const files = await executeWorker(worker, request, onProgress);
     return files.map((file) => ({
       name: file.name,
-      blob: new Blob([Uint8Array.from(file.bytes)], { type: file.mimeType }),
+      blob: new Blob([file.bytes as BlobPart], { type: file.mimeType }),
     }));
   } finally {
     worker.terminate();

@@ -20,6 +20,7 @@ interface PageGridProps {
   onDeletePage: (pageId: string) => void;
   onReorder: (draggedPageId: string, targetPageId: string, position: DropTargetPosition) => void;
   onExternalFileDrop?: (files: File[], targetPageId: string, position: DropTargetPosition) => void;
+  onInvisible?: (pageId: string) => void;
 }
 
 const gridDensityClasses: Record<ThumbnailDensity, string> = {
@@ -57,6 +58,7 @@ export function PageGrid({
   onDeletePage,
   onReorder,
   onExternalFileDrop,
+  onInvisible,
 }: PageGridProps) {
   const selected = new Set(selectedPageIds);
   const [draggedPageId, setDraggedPageId] = useState<string | null>(null);
@@ -124,6 +126,7 @@ export function PageGrid({
                     thumbnailDensity={thumbnailDensity}
                     externalDropPosition={externalDropTarget?.pageId === page.id ? externalDropTarget.position : null}
                     onVisible={() => onRequestThumbnail(page, document)}
+                    onInvisible={() => onInvisible?.(page.id)}
                     onClick={onPageClick}
                     onToggleSelection={onTogglePageSelection}
                     onOpenViewer={onOpenViewer}
@@ -166,6 +169,7 @@ function PageCard({
   thumbnailDensity,
   externalDropPosition,
   onVisible,
+  onInvisible,
   onClick,
   onToggleSelection,
   onOpenViewer,
@@ -186,6 +190,7 @@ function PageCard({
   thumbnailDensity: ThumbnailDensity;
   externalDropPosition: DropTargetPosition | null;
   onVisible: () => void;
+  onInvisible?: () => void;
   onClick: (pageId: string, gesture?: { additive?: boolean; range?: boolean }) => void;
   onToggleSelection: (pageId: string, gesture?: { range?: boolean }) => void;
   onOpenViewer: (pageId: string) => void;
@@ -203,15 +208,17 @@ function PageCard({
 
   useEffect(() => {
     const node = containerRef.current;
-    if (!node || thumbnail?.status === 'ready') {
+    if (!node || thumbnail?.status === 'ready' || thumbnail?.status === 'error') {
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
           onVisible();
-          observer.disconnect();
+        } else {
+          onInvisible?.();
         }
       },
       { rootMargin: '120px' },
@@ -219,7 +226,7 @@ function PageCard({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [thumbnail?.status, onVisible]);
+  }, [thumbnail?.status, onVisible, onInvisible]);
 
   const computeDropPosition = (event: React.DragEvent): DropTargetPosition => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -313,7 +320,7 @@ function PageCard({
             }}
           >
             <ThumbnailPreview thumbnail={thumbnail} rotation={page.rotation} />
-            <span className="absolute left-1.5 top-1.5 rounded-md bg-[color:var(--pm-surface-strong)] px-1.5 py-0.5 text-[10px] font-medium text-[color:var(--pm-on-surface-strong)]">
+            <span className="absolute left-1.5 top-1.5 rounded-md pm-bg-strong px-1.5 py-0.5 text-[10px] font-medium">
               {page.sourcePageIndex + 1}
             </span>
             <button

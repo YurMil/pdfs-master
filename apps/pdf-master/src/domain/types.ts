@@ -198,10 +198,11 @@ export interface PdfReaderCapabilities {
 }
 
 export interface PdfReader {
-  loadDocument(documentId: string, sourceFile: File): Promise<{ documentId: string; pageCount: number }>;
+  loadDocument(documentId: string, sourceFile: File, sourceUrl?: string): Promise<{ documentId: string; pageCount: number }>;
   renderPageThumbnail(input: {
     documentId: string;
     sourceFile: File;
+    sourceUrl?: string;
     pageIndex: number;
     maxWidth: number;
     signal?: AbortSignal;

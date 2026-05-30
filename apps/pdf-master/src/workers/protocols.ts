@@ -66,7 +66,7 @@ export interface RenderWorkerRequest {
   requestId: string;
   documentId: string;
   pageId: string;
-  file: File;
+  url: string;
   pageIndex: number;
   maxWidth: number;
 }
