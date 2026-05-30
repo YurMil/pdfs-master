@@ -33,7 +33,7 @@ export function resolveThumbnailWorkerPoolSize(input: ThumbnailRenderCapabilityI
   if (!input.supportsWorkers || !input.supportsOffscreenCanvas) {
     return 0;
   }
-  return hardwareConcurrency;
+  return Math.min(3, Math.max(1, Math.floor(hardwareConcurrency / 2)));
 }
 
 export function resolveThumbnailRenderConcurrency(input: ThumbnailRenderCapabilityInput = {}): number {

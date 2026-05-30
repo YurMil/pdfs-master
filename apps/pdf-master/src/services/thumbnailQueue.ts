@@ -11,6 +11,7 @@ interface ThumbnailRequest {
   pageId: string;
   documentId: string;
   sourceFile: File;
+  sourceUrl?: string;
   pageIndex: number;
   maxWidth: number;
 }
@@ -18,6 +19,7 @@ interface ThumbnailRequest {
 interface RenderWorkerClient {
   id: number;
   worker: Worker;
+  queue: PromiseQueue<Blob>;
   busy: boolean;
   terminated: boolean;
   handleMessage: (event: MessageEvent<RenderWorkerResponse>) => void;
@@ -27,7 +29,7 @@ interface RenderWorkerClient {
 const WORKER_RENDER_TIMEOUT_MS = 4000;
 
 export class ThumbnailQueue {
-  private readonly queue: PromiseQueue<string>;
+  private readonly fallbackQueue: PromiseQueue<Blob>;
   private readonly cache = new LruMap<string, string>(180, (_key, url) => revokeObjectUrl(url));
   private readonly pending = new Map<
     string,
@@ -53,7 +55,7 @@ export class ThumbnailQueue {
   constructor(private readonly reader: PdfReader) {
     const renderEnvironment = getThumbnailRenderEnvironment();
     this.fallbackConcurrency = renderEnvironment.fallbackConcurrency;
-    this.queue = new PromiseQueue<string>(renderEnvironment.maxParallelRenders);
+    this.fallbackQueue = new PromiseQueue<Blob>(this.fallbackConcurrency);
 
     for (let index = 0; index < renderEnvironment.workerPoolSize; index += 1) {
       this.renderWorkers.push(this.createRenderWorker(index));
@@ -75,9 +77,28 @@ export class ThumbnailQueue {
 
     const controller = new AbortController();
     const workerRequestId = createId('render');
-    const promise = this.queue
-      .add(async () => {
-        const blob = await this.renderThumbnail(request, controller, workerRequestId);
+
+    let runTask: () => Promise<Blob>;
+
+    if (this.workerAvailable && this.getActiveWorkers().length > 0) {
+      const client = this.getWorkerForDocument(request.documentId);
+      runTask = () => client.queue.add(() => this.renderViaWorker(client, request, controller, workerRequestId));
+    } else {
+      runTask = () =>
+        this.fallbackQueue.add(() =>
+          this.reader.renderPageThumbnail({
+            documentId: request.documentId,
+            sourceFile: request.sourceFile,
+            sourceUrl: request.sourceUrl,
+            pageIndex: request.pageIndex,
+            maxWidth: request.maxWidth,
+            signal: controller.signal,
+          })
+        );
+    }
+
+    const promise = runTask()
+      .then((blob) => {
         const url = makeObjectUrl(blob);
         this.cache.set(request.pageId, url);
         return url;
@@ -137,56 +158,12 @@ export class ThumbnailQueue {
     this.syncQueueConcurrency();
   }
 
-  private async renderThumbnail(
-    request: ThumbnailRequest,
-    controller: AbortController,
-    workerRequestId: string,
-  ): Promise<Blob> {
-    if (controller.signal.aborted) {
-      throw new DOMException('Thumbnail rendering canceled.', 'AbortError');
-    }
-
-    if (this.workerAvailable && this.getActiveWorkers().length) {
-      try {
-        return await this.renderViaWorker(request, controller, workerRequestId);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          throw error;
-        }
-        if (
-          error instanceof PdfMasterError &&
-          (error.code === ErrorCode.UnsupportedOperation || error.code === ErrorCode.WorkerFailed)
-        ) {
-          this.disableRenderWorkers(error);
-        } else if (error instanceof Error && error.message.includes('OffscreenCanvas')) {
-          this.disableRenderWorkers(
-            new PdfMasterError(ErrorCode.UnsupportedOperation, 'OffscreenCanvas is not available for render workers.'),
-          );
-        }
-      }
-    }
-
-    return this.reader.renderPageThumbnail({
-      documentId: request.documentId,
-      sourceFile: request.sourceFile,
-      pageIndex: request.pageIndex,
-      maxWidth: request.maxWidth,
-      signal: controller.signal,
-    });
-  }
-
   private renderViaWorker(
+    client: RenderWorkerClient,
     request: ThumbnailRequest,
     controller: AbortController,
     workerRequestId: string,
   ): Promise<Blob> {
-    const client = this.acquireWorker();
-    if (!client) {
-      return Promise.reject(
-        new PdfMasterError(ErrorCode.WorkerFailed, 'No render worker is currently available for thumbnail generation.'),
-      );
-    }
-
     client.busy = true;
 
     return new Promise<Blob>((resolve, reject) => {
@@ -256,7 +233,7 @@ export class ThumbnailQueue {
         requestId: workerRequestId,
         documentId: request.documentId,
         pageId: request.pageId,
-        file: request.sourceFile,
+        url: request.sourceUrl || '',
         pageIndex: request.pageIndex,
         maxWidth: request.maxWidth,
       };
@@ -328,6 +305,7 @@ export class ThumbnailQueue {
     const client: RenderWorkerClient = {
       id,
       worker,
+      queue: new PromiseQueue<Blob>(1),
       busy: false,
       terminated: false,
       handleMessage: (event) => this.handleWorkerMessage(client, event),
@@ -339,12 +317,23 @@ export class ThumbnailQueue {
     return client;
   }
 
-  private acquireWorker(): RenderWorkerClient | null {
-    if (!this.workerAvailable) {
-      return null;
+  private getWorkerIndexForDocument(documentId: string): number {
+    const active = this.getActiveWorkers();
+    if (active.length === 0) {
+      return 0;
     }
+    let hash = 0;
+    for (let i = 0; i < documentId.length; i++) {
+      hash = (hash << 5) - hash + documentId.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash) % active.length;
+  }
 
-    return this.getActiveWorkers().find((client) => !client.busy) ?? null;
+  private getWorkerForDocument(documentId: string): RenderWorkerClient {
+    const active = this.getActiveWorkers();
+    const index = this.getWorkerIndexForDocument(documentId);
+    return active[index];
   }
 
   private disableRenderWorkers(error: PdfMasterError): void {
@@ -370,7 +359,6 @@ export class ThumbnailQueue {
   private syncQueueConcurrency(): void {
     const workerCount = this.getActiveWorkers().length;
     this.workerAvailable = workerCount > 0;
-    this.queue.setConcurrency(workerCount > 0 ? workerCount : this.fallbackConcurrency);
   }
 
   private broadcastToWorkers(message: RenderWorkerMessage): void {

@@ -166,3 +166,43 @@ textarea {
   outline-offset: 2px;
   border-radius: 0.375rem;
 }
+
+/* Segmented Control Styling */
+.pm-segmented-control {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  border-radius: 0.75rem;
+  border: 1px solid var(--pm-border-subtle);
+  background: var(--pm-panel);
+  padding: 0.25rem;
+}
+
+.pm-segmented-control-btn {
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--pm-text-muted);
+  border: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.pm-segmented-control-btn:hover {
+  background: var(--pm-surface-hover);
+  color: var(--pm-text-strong);
+}
+
+.pm-segmented-control-btn.active {
+  background: var(--pm-surface);
+  color: var(--pm-text-strong);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Helper class to guarantee high-contrast text on strong backgrounds */
+.pm-bg-strong {
+  background-color: var(--pm-surface-strong) !important;
+  color: var(--pm-on-surface-strong) !important;
+}

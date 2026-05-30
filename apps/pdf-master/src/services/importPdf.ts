@@ -97,43 +97,38 @@ async function importPdfFilesInternal(
   onProgress?: (completed: number, total: number) => void,
   metaForFile?: (file: File) => Pick<ImportedDocument, 'originalImageFile' | 'imageFitSettings'> | undefined,
 ): Promise<ImportResult> {
-  const worker = new Worker(new URL('../workers/ingest.worker.ts', import.meta.url), { type: 'module' });
   const imported: ImportedDocument[] = [];
   const errors: Array<{ fileName: string; error: ErrorModel }> = [];
   let completed = 0;
 
-  try {
-    await Promise.all(
-      files.map(async (file) => {
-        try {
-          validatePdfFile(file);
-          const sourceFile: SourceFileModel = {
-            id: createId('source'),
-            name: file.name,
-            size: file.size,
-            lastModified: file.lastModified,
-            type: file.type,
-            file,
-          };
-          const documentId = createId('document');
-          const payload = await inspectWithWorker(worker, { documentId, file });
-          const extra = metaForFile?.(file) ?? {};
-          imported.push({
-            sourceFile,
-            payload,
-            sourceUrl: makeObjectUrl(file),
-            ...extra,
-          });
-        } catch (error) {
-          errors.push({ fileName: file.name, error: toErrorModel(error) });
-        } finally {
-          completed += 1;
-          onProgress?.(completed, files.length);
-        }
-      }),
-    );
-  } finally {
-    worker.terminate();
+  for (const file of files) {
+    const worker = new Worker(new URL('../workers/ingest.worker.ts', import.meta.url), { type: 'module' });
+    try {
+      validatePdfFile(file);
+      const sourceFile: SourceFileModel = {
+        id: createId('source'),
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified,
+        type: file.type,
+        file,
+      };
+      const documentId = createId('document');
+      const payload = await inspectWithWorker(worker, { documentId, file });
+      const extra = metaForFile?.(file) ?? {};
+      imported.push({
+        sourceFile,
+        payload,
+        sourceUrl: makeObjectUrl(file),
+        ...extra,
+      });
+    } catch (error) {
+      errors.push({ fileName: file.name, error: toErrorModel(error) });
+    } finally {
+      worker.terminate();
+      completed += 1;
+      onProgress?.(completed, files.length);
+    }
   }
 
   return { imported, errors };

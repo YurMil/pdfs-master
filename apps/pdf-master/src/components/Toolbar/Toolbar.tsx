@@ -223,16 +223,14 @@ function SegmentedControl<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="inline-flex h-9 items-center rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] p-1" aria-label={label}>
+    <div className="pm-segmented-control" aria-label={label}>
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           className={clsx(
-            'rounded-lg px-2.5 py-1 text-xs font-medium transition',
-            option.value === value
-              ? 'bg-[color:var(--pm-selected-bg)] text-[color:var(--pm-selected-fg)] shadow-sm'
-              : 'text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]',
+            'pm-segmented-control-btn',
+            option.value === value && 'active',
           )}
           onClick={() => onChange(option.value)}
         >

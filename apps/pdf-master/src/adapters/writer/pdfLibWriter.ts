@@ -127,12 +127,11 @@ export class PdfLibWriter implements PdfWriter {
   }
 
   private async prepareDocuments(documents: MergeInput['documents']): Promise<Map<string, PDFDocument>> {
-    const entries = await Promise.all(
-      documents.map(async (document) => {
-        const prepared = await this.prepareSourceDocument(document.sourceFile, document.formValues, document.flatten);
-        return [document.documentId, prepared] as const;
-      }),
-    );
+    const entries: Array<readonly [string, PDFDocument]> = [];
+    for (const document of documents) {
+      const prepared = await this.prepareSourceDocument(document.sourceFile, document.formValues, document.flatten);
+      entries.push([document.documentId, prepared] as const);
+    }
 
     return new Map(entries);
   }

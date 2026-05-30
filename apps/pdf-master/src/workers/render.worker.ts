@@ -71,9 +71,10 @@ async function renderThumbnail(message: RenderWorkerRequest): Promise<void> {
   };
   activeRenders.set(message.requestId, active);
   let page: Awaited<ReturnType<PDFDocumentProxy['getPage']>> | null = null;
+  let canvas: OffscreenCanvas | null = null;
 
   try {
-    const pdfDocument = await getDocument(message.documentId, message.file);
+    const pdfDocument = await getDocument(message.documentId, message.url);
     if (active.aborted) {
       throw new DOMException('Thumbnail rendering canceled.', 'AbortError');
     }
@@ -82,7 +83,7 @@ async function renderThumbnail(message: RenderWorkerRequest): Promise<void> {
     const baseViewport = page.getViewport({ scale: 1 });
     const scale = Math.max(message.maxWidth / baseViewport.width, 0.2);
     const viewport = page.getViewport({ scale });
-    const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+    canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
     const context = canvas.getContext('2d', getCanvas2dContextSettings(renderEnvironment.supportsHardwareAcceleration));
 
     if (!context) {
@@ -129,6 +130,10 @@ async function renderThumbnail(message: RenderWorkerRequest): Promise<void> {
   } finally {
     activeRenders.delete(message.requestId);
     page?.cleanup();
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
   }
 }
 
@@ -165,15 +170,14 @@ async function resetWorker(_message: RenderWorkerResetRequest): Promise<void> {
   await Promise.all(documentIds.map((documentId) => releaseDocument({ type: 'render:release-document', documentId })));
 }
 
-async function getDocument(documentId: string, file: File): Promise<PDFDocumentProxy> {
+async function getDocument(documentId: string, url: string): Promise<PDFDocumentProxy> {
   const cached = documentCache.get(documentId);
   if (cached) {
     return cached.document;
   }
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
   const loadingTask = pdfjs.getDocument({
-    data: bytes,
+    url: url,
     disableWorker: true,
     useWorkerFetch: false,
     isOffscreenCanvasSupported: renderEnvironment.supportsOffscreenCanvas,

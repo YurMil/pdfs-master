@@ -76,7 +76,8 @@ self.onmessage = async (event: MessageEvent<ExportWorkerMessage>) => {
       requestId: message.requestId,
       files,
     };
-    self.postMessage(response);
+    const transferables = files.map((file) => file.bytes.buffer);
+    self.postMessage(response, transferables);
   } catch (error) {
     const response: ExportWorkerResponse = {
       type: 'export:error',

@@ -79,7 +79,7 @@ export function PdfViewerDialog({
             </button>
             <button
               type="button"
-              className="rounded-lg bg-[color:var(--pm-surface-strong)] px-3 py-2 text-sm font-medium text-[color:var(--pm-on-surface-strong)] hover:bg-[color:var(--pm-surface-strong)]"
+              className="rounded-lg pm-bg-strong px-3 py-2 text-sm font-medium hover:opacity-90 transition"
               onClick={onClose}
             >
               Close
