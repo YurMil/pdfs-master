@@ -56,6 +56,7 @@ export function addDocumentToWorkspace(
       height: page.height,
       rotation: 0,
       label: page.label,
+      textContent: page.textContent,
     };
     pages[page.id] = pageEntity;
     pageIds.push(page.id);
@@ -118,6 +119,7 @@ export function addDocumentToWorkspaceAtPosition(
       height: page.height,
       rotation: 0,
       label: page.label,
+      textContent: page.textContent,
     };
     pages[page.id] = pageEntity;
     pageIds.push(page.id);

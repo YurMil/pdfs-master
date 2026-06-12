@@ -117,6 +117,19 @@ export function App() {
       }),
     [orderedDocuments, store.pageOrderByDocument, store.pages],
   );
+  const pageTextSearchIndex = useMemo(() => {
+    const index = new Map<string, string>();
+
+    for (const { pages } of groupedPages) {
+      for (const page of pages) {
+        if (page.textContent) {
+          index.set(page.id, page.textContent.toLowerCase());
+        }
+      }
+    }
+
+    return index;
+  }, [groupedPages]);
 
   const filteredGroups = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -132,7 +145,8 @@ export function App() {
           : pages.filter(
               (page) =>
                 page.label.toLowerCase().includes(query) ||
-                String(page.sourcePageIndex + 1).includes(query),
+                String(page.sourcePageIndex + 1).includes(query) ||
+                pageTextSearchIndex.get(page.id)?.includes(query),
             );
 
         if (!matchingPages.length) {
@@ -142,7 +156,7 @@ export function App() {
         return { document, pages: matchingPages };
       })
       .filter(Boolean) as typeof groupedPages;
-  }, [groupedPages, searchQuery]);
+  }, [groupedPages, pageTextSearchIndex, searchQuery]);
 
   const workspaceRevision = useMemo(
     () =>
@@ -671,7 +685,7 @@ export function App() {
                 <div className="p-4">
                   <EmptyState
                     title="No pages match this search"
-                    description="Try a page number, page label, or clear the search field to return to the full workspace."
+                    description="Try a page number, page label, text content, or clear the search field to return to the full workspace."
                   />
                 </div>
               )

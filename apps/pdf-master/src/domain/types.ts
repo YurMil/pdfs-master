@@ -92,6 +92,7 @@ export interface PageEntity {
   height: number;
   rotation: number;
   label: string;
+  textContent?: string;
 }
 
 export interface SelectionState {
@@ -180,6 +181,7 @@ export interface IngestPagePayload {
   width: number;
   height: number;
   label: string;
+  textContent?: string;
 }
 
 export interface IngestDocumentPayload {

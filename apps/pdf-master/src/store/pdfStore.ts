@@ -481,6 +481,7 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
           height: page.height,
           rotation: 0,
           label: page.label,
+          textContent: page.textContent,
         };
         newPageIds.push(page.id);
       }
