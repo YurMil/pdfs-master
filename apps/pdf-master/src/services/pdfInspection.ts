@@ -7,10 +7,15 @@ import {
   PDFTextField,
 } from 'pdf-lib';
 import type { PDFField } from 'pdf-lib';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { FormFieldModel, IngestDocumentPayload } from '@/domain/types';
 
 export async function inspectPdfFile(file: File, documentId: string): Promise<IngestDocumentPayload> {
-  const pdf = await PDFDocument.load(await file.arrayBuffer(), { updateMetadata: false });
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const [pdf, pageTextContent] = await Promise.all([
+    PDFDocument.load(bytes.slice(), { updateMetadata: false }),
+    extractPageTextContent(bytes.slice()),
+  ]);
   const pages = pdf.getPages().map((page, index) => {
     const size = page.getSize();
     return {
@@ -19,6 +24,7 @@ export async function inspectPdfFile(file: File, documentId: string): Promise<In
       width: size.width,
       height: size.height,
       label: `Page ${index + 1}`,
+      textContent: pageTextContent[index],
     };
   });
 
@@ -45,6 +51,40 @@ export async function inspectPdfFile(file: File, documentId: string): Promise<In
     formFields: fields,
     pages,
   };
+}
+
+async function extractPageTextContent(bytes: Uint8Array): Promise<string[]> {
+  const loadingTask = pdfjs.getDocument({
+    data: bytes,
+    disableWorker: true,
+    stopAtErrors: false,
+  } as Parameters<typeof pdfjs.getDocument>[0] & { disableWorker: boolean });
+
+  const pdf = await loadingTask.promise;
+
+  try {
+    const textContent: string[] = [];
+
+    for (let index = 1; index <= pdf.numPages; index += 1) {
+      const page = await pdf.getPage(index);
+      try {
+        const content = await page.getTextContent();
+        textContent.push(
+          content.items
+            .map((item) => ('str' in item ? item.str : ''))
+            .join(' ')
+            .trim(),
+        );
+      } finally {
+        page.cleanup();
+      }
+    }
+
+    return textContent;
+  } finally {
+    await pdf.destroy();
+    loadingTask.destroy();
+  }
 }
 
 function readFormField(field: PDFField): FormFieldModel {
