@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { PdfLibWriter } from '@/adapters/writer/pdfLibWriter';
 import { ErrorCode, toErrorModel } from '@/domain/errors';
-import type { ExportWorkerMessage, ExportWorkerResponse } from '@/workers/protocols';
+import type { ExportProfile, ExportWorkerMessage, ExportWorkerResponse } from '@/workers/protocols';
 
 const writer = new PdfLibWriter();
 
@@ -41,6 +41,7 @@ self.onmessage = async (event: MessageEvent<ExportWorkerMessage>) => {
         formValues: source.formValues,
         flatten: source.flatten,
         baseFileName: message.baseFileName || source.name,
+        exportProfile: message.exportProfile,
       });
     } else {
       const bytes =
@@ -49,10 +50,12 @@ self.onmessage = async (event: MessageEvent<ExportWorkerMessage>) => {
               documents: message.documents,
               pages: message.pages,
               pageIds: message.mode.pageIds,
+              exportProfile: message.exportProfile,
             })
           : await writer.mergeDocuments({
               documents: message.documents,
               pages: message.pages,
+              exportProfile: message.exportProfile,
             });
 
       self.postMessage({

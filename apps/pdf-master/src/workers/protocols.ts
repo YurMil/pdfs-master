@@ -30,6 +30,8 @@ export interface ExportWorkerDocument {
   name: string;
 }
 
+import type { ExportProfile } from '@/domain/types';
+
 export interface ExportWorkerRequest {
   type: 'export';
   requestId: string;
@@ -37,6 +39,7 @@ export interface ExportWorkerRequest {
   baseFileName: string;
   documents: ExportWorkerDocument[];
   pages: ExportPageDescriptor[];
+  exportProfile: ExportProfile;
 }
 
 export interface ExportWorkerProgress {

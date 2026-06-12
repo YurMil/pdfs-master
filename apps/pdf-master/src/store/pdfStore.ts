@@ -14,6 +14,7 @@ import {
 import type {
   DropTargetPosition,
   ExportMode,
+  ExportProfile,
   FormFieldValue,
   ImageImportSettings,
   JobKind,
@@ -87,6 +88,7 @@ function createInitialState(): PdfAppState {
       exportFileName: 'pdf-master-export',
       splitRangeInput: '1-2;3-4',
       imageImportSettings: { ...DEFAULT_IMAGE_IMPORT_SETTINGS },
+      exportProfile: 'lossless',
     },
     notifications: [],
   };
@@ -378,6 +380,12 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
   setSplitRangeInput: (value) => {
     set((state) => ({
       ui: { ...state.ui, splitRangeInput: value },
+    }));
+  },
+
+  setExportProfile: (profile: ExportProfile) => {
+    set((state) => ({
+      ui: { ...state.ui, exportProfile: profile },
     }));
   },
 

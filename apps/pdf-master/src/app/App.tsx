@@ -327,7 +327,7 @@ export function App() {
 
     snapshot.setJob('export', { status: 'running', progress: 5, message: 'Preparing export...' });
     try {
-      const files = await runExport(snapshot, mode, snapshot.ui.exportFileName, (progress, message) => {
+      const files = await runExport(snapshot, mode, snapshot.ui.exportFileName, snapshot.ui.exportProfile, (progress, message) => {
         usePdfStore.getState().setJob('export', { status: 'running', progress, message });
       });
       downloadExportFiles(files);
@@ -800,6 +800,7 @@ export function App() {
       <ExportDialog
         open={store.ui.exportDialogOpen}
         exportMode={store.ui.exportMode}
+        exportProfile={store.ui.exportProfile}
         fileName={store.ui.exportFileName}
         splitRangeInput={store.ui.splitRangeInput}
         activeDocument={activeDocument}
@@ -815,6 +816,7 @@ export function App() {
           store.setExportMode(mode);
         }}
         onSplitRangeChange={store.setSplitRangeInput}
+        onProfileChange={store.setExportProfile}
         onSubmit={handleExport}
       />
     </>

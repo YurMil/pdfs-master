@@ -26,6 +26,7 @@ export async function runExport(
   snapshot: WorkspaceSnapshot,
   mode: ExportMode,
   baseFileName: string,
+  exportProfile: ExportProfile,
   onProgress: (progress: number, message: string) => void,
 ): Promise<Array<{ name: string; blob: Blob }>> {
   const worker = new Worker(new URL('../workers/export.worker.ts', import.meta.url), { type: 'module' });
@@ -36,6 +37,7 @@ export async function runExport(
       requestId: createId('export'),
       mode,
       baseFileName: buildPdfFileName(baseFileName).replace(/\.pdf$/i, ''),
+      exportProfile,
       documents: snapshot.documentOrder.map((documentId) => {
         const document = snapshot.documents[documentId];
         return {

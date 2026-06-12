@@ -13,6 +13,7 @@ import { ErrorCode, PdfMasterError } from '@/domain/errors';
 import type {
   DeleteInput,
   ExportFileResult,
+  ExportProfile,
   FillFormInput,
   FlattenFormInput,
   FormFieldValue,
@@ -24,15 +25,16 @@ import type {
 import { buildPdfFileName, sanitizeBaseName, stripPdfExtension } from '@/utils/file';
 
 export class PdfLibWriter implements PdfWriter {
-  async mergeDocuments(input: MergeInput): Promise<Uint8Array> {
-    return this.buildMergedPdf(input.pages, input.documents);
+  async mergeDocuments(input: MergeInput & { exportProfile?: ExportProfile }): Promise<Uint8Array> {
+    return this.buildMergedPdf(input.pages, input.documents, input.exportProfile);
   }
 
-  async extractPages(input: MergeInput & { pageIds: string[] }): Promise<Uint8Array> {
+  async extractPages(input: MergeInput & { pageIds: string[]; exportProfile?: ExportProfile }): Promise<Uint8Array> {
     const selected = new Set(input.pageIds);
     return this.buildMergedPdf(
       input.pages.filter((page) => selected.has(page.pageId)),
       input.documents,
+      input.exportProfile,
     );
   }
 
@@ -54,12 +56,12 @@ export class PdfLibWriter implements PdfWriter {
 
   async fillForm(input: FillFormInput): Promise<Uint8Array> {
     const prepared = await this.prepareSourceDocument(input.sourceFile, input.values, false);
-    return prepared.save();
+    return this.saveWithProfile(prepared, 'lossless');
   }
 
   async flattenForm(input: FlattenFormInput): Promise<Uint8Array> {
     const prepared = await this.prepareSourceDocument(input.sourceFile, input.values, true);
-    return prepared.save();
+    return this.saveWithProfile(prepared, 'lossless');
   }
 
   async splitDocument(input: {
@@ -69,9 +71,11 @@ export class PdfLibWriter implements PdfWriter {
     formValues: Record<string, FormFieldValue>;
     flatten: boolean;
     baseFileName: string;
+    exportProfile?: ExportProfile;
   }): Promise<ExportFileResult[]> {
     const preparedSource = await this.prepareSourceDocument(input.sourceFile, input.formValues, input.flatten);
     const cleanBaseName = sanitizeBaseName(stripPdfExtension(input.baseFileName || input.sourceFile.name));
+    const profile = input.exportProfile ?? 'lossless';
     const outputs: ExportFileResult[] = [];
 
     for (const [index, rangeGroup] of input.rangeGroups.entries()) {
@@ -80,7 +84,7 @@ export class PdfLibWriter implements PdfWriter {
       copiedPages.forEach((page) => pdf.addPage(page));
       outputs.push({
         name: buildPdfFileName(cleanBaseName, `part-${index + 1}`),
-        bytes: await pdf.save(),
+        bytes: await this.saveWithProfile(pdf, profile),
         mimeType: 'application/pdf',
       });
     }
@@ -88,9 +92,21 @@ export class PdfLibWriter implements PdfWriter {
     return outputs;
   }
 
+  private async saveWithProfile(pdf: PDFDocument, profile: ExportProfile): Promise<Uint8Array> {
+    if (profile === 'low-size') {
+      return pdf.save({
+        useObjectStreams: true,
+        addDefaultPage: false,
+        objectsPerStream: 100,
+      });
+    }
+    return pdf.save();
+  }
+
   private async buildMergedPdf(
     pages: MergeInput['pages'],
     documents: MergeInput['documents'],
+    exportProfile?: ExportProfile,
   ): Promise<Uint8Array> {
     if (!pages.length) {
       throw new PdfMasterError(ErrorCode.ExportFailed, 'There are no pages available for export.');
@@ -123,7 +139,8 @@ export class PdfLibWriter implements PdfWriter {
       output.addPage(copiedPage);
     }
 
-    return output.save();
+    const profile = exportProfile ?? 'lossless';
+    return this.saveWithProfile(output, profile);
   }
 
   private async prepareDocuments(documents: MergeInput['documents']): Promise<Map<string, PDFDocument>> {
