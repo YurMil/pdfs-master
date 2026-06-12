@@ -117,6 +117,19 @@ export function App() {
       }),
     [orderedDocuments, store.pageOrderByDocument, store.pages],
   );
+  const pageTextSearchIndex = useMemo(() => {
+    const index = new Map<string, string>();
+
+    for (const { pages } of groupedPages) {
+      for (const page of pages) {
+        if (page.textContent) {
+          index.set(page.id, page.textContent.toLowerCase());
+        }
+      }
+    }
+
+    return index;
+  }, [groupedPages]);
 
   const filteredGroups = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -133,7 +146,7 @@ export function App() {
               (page) =>
                 page.label.toLowerCase().includes(query) ||
                 String(page.sourcePageIndex + 1).includes(query) ||
-                (page.textContent && page.textContent.toLowerCase().includes(query)),
+                pageTextSearchIndex.get(page.id)?.includes(query),
             );
 
         if (!matchingPages.length) {
@@ -143,7 +156,7 @@ export function App() {
         return { document, pages: matchingPages };
       })
       .filter(Boolean) as typeof groupedPages;
-  }, [groupedPages, searchQuery]);
+  }, [groupedPages, pageTextSearchIndex, searchQuery]);
 
   const workspaceRevision = useMemo(
     () =>
