@@ -132,7 +132,8 @@ export function App() {
           : pages.filter(
               (page) =>
                 page.label.toLowerCase().includes(query) ||
-                String(page.sourcePageIndex + 1).includes(query),
+                String(page.sourcePageIndex + 1).includes(query) ||
+                (page.textContent && page.textContent.toLowerCase().includes(query)),
             );
 
         if (!matchingPages.length) {
@@ -671,7 +672,7 @@ export function App() {
                 <div className="p-4">
                   <EmptyState
                     title="No pages match this search"
-                    description="Try a page number, page label, or clear the search field to return to the full workspace."
+                    description="Try a page number, page label, text content, or clear the search field to return to the full workspace."
                   />
                 </div>
               )
