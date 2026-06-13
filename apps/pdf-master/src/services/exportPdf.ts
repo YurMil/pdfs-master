@@ -1,7 +1,7 @@
 import { buildPdfFileName } from '@/utils/file';
 import { createId } from '@/utils/ids';
 import { makeObjectUrl, revokeObjectUrl } from '@/utils/objectUrl';
-import type { ExportFileResult, ExportMode, ExportPageDescriptor, WorkspaceSnapshot } from '@/domain/types';
+import type { ExportFileResult, ExportMode, ExportPageDescriptor, ExportProfile, WorkspaceSnapshot } from '@/domain/types';
 import { getFormFieldMap } from '@/services/formService';
 import { parseRangeGroups } from '@/domain/validation';
 import type { ExportWorkerRequest, ExportWorkerResponse } from '@/workers/protocols';
@@ -26,6 +26,7 @@ export async function runExport(
   snapshot: WorkspaceSnapshot,
   mode: ExportMode,
   baseFileName: string,
+  exportProfile: ExportProfile,
   onProgress: (progress: number, message: string) => void,
 ): Promise<Array<{ name: string; blob: Blob }>> {
   const worker = new Worker(new URL('../workers/export.worker.ts', import.meta.url), { type: 'module' });
@@ -36,6 +37,7 @@ export async function runExport(
       requestId: createId('export'),
       mode,
       baseFileName: buildPdfFileName(baseFileName).replace(/\.pdf$/i, ''),
+      exportProfile,
       documents: snapshot.documentOrder.map((documentId) => {
         const document = snapshot.documents[documentId];
         return {

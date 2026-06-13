@@ -41,6 +41,7 @@ self.onmessage = async (event: MessageEvent<ExportWorkerMessage>) => {
         formValues: source.formValues,
         flatten: source.flatten,
         baseFileName: message.baseFileName || source.name,
+        exportProfile: message.exportProfile,
       });
     } else {
       const bytes =
@@ -49,10 +50,12 @@ self.onmessage = async (event: MessageEvent<ExportWorkerMessage>) => {
               documents: message.documents,
               pages: message.pages,
               pageIds: message.mode.pageIds,
+              exportProfile: message.exportProfile,
             })
           : await writer.mergeDocuments({
               documents: message.documents,
               pages: message.pages,
+              exportProfile: message.exportProfile,
             });
 
       self.postMessage({
