@@ -50,6 +50,7 @@ interface PdfStoreActions {
   setExportMode: (mode: ExportMode) => void;
   setExportFileName: (name: string) => void;
   setSplitRangeInput: (value: string) => void;
+  setExportProfile: (profile: ExportProfile) => void;
   setThumbnailState: (pageId: string, nextState: ThumbnailState) => void;
   clearThumbnail: (pageId: string) => void;
   updateFormField: (documentId: string, fieldName: string, value: FormFieldValue) => void;

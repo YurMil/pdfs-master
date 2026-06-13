@@ -1,4 +1,12 @@
-import type { ErrorModel, ExportFileResult, ExportMode, ExportPageDescriptor, FormFieldValue, IngestDocumentPayload } from '@/domain/types';
+import type {
+  ErrorModel,
+  ExportFileResult,
+  ExportMode,
+  ExportPageDescriptor,
+  ExportProfile,
+  FormFieldValue,
+  IngestDocumentPayload,
+} from '@/domain/types';
 
 export interface IngestWorkerRequest {
   type: 'ingest';
@@ -29,8 +37,6 @@ export interface ExportWorkerDocument {
   flatten: boolean;
   name: string;
 }
-
-import type { ExportProfile } from '@/domain/types';
 
 export interface ExportWorkerRequest {
   type: 'export';

@@ -1,7 +1,7 @@
 import { buildPdfFileName } from '@/utils/file';
 import { createId } from '@/utils/ids';
 import { makeObjectUrl, revokeObjectUrl } from '@/utils/objectUrl';
-import type { ExportFileResult, ExportMode, ExportPageDescriptor, WorkspaceSnapshot } from '@/domain/types';
+import type { ExportFileResult, ExportMode, ExportPageDescriptor, ExportProfile, WorkspaceSnapshot } from '@/domain/types';
 import { getFormFieldMap } from '@/services/formService';
 import { parseRangeGroups } from '@/domain/validation';
 import type { ExportWorkerRequest, ExportWorkerResponse } from '@/workers/protocols';

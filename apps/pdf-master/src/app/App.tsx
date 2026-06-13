@@ -405,7 +405,7 @@ export function App() {
     }));
 
     try {
-      const files = await runExport(snapshot, { kind: 'workspace' }, snapshot.ui.exportFileName || 'pdf-master-viewer', (progress, message) => {
+      const files = await runExport(snapshot, { kind: 'workspace' }, snapshot.ui.exportFileName || 'pdf-master-viewer', snapshot.ui.exportProfile, (progress, message) => {
         if (viewerRequestRef.current !== requestId) {
           return;
         }

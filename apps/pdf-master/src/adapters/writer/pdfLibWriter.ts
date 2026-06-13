@@ -97,7 +97,6 @@ export class PdfLibWriter implements PdfWriter {
       return pdf.save({
         useObjectStreams: true,
         addDefaultPage: false,
-        objectsPerStream: 100,
       });
     }
     return pdf.save();

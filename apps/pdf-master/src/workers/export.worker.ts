@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { PdfLibWriter } from '@/adapters/writer/pdfLibWriter';
 import { ErrorCode, toErrorModel } from '@/domain/errors';
-import type { ExportProfile, ExportWorkerMessage, ExportWorkerResponse } from '@/workers/protocols';
+import type { ExportWorkerMessage, ExportWorkerResponse } from '@/workers/protocols';
 
 const writer = new PdfLibWriter();
 
