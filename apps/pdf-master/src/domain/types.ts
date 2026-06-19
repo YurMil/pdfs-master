@@ -11,6 +11,8 @@ export type PaperFormat = 'A0' | 'A1' | 'A2' | 'A3' | 'A4';
 export type PaperOrientation = 'auto' | 'portrait' | 'landscape';
 export type DocumentKind = 'pdf' | 'image';
 
+export type ExportProfile = 'lossless' | 'low-size';
+
 export interface ImageImportSettings {
   paperFormat: PaperFormat;
   orientation: PaperOrientation;
@@ -154,6 +156,7 @@ export interface UiState {
   exportFileName: string;
   splitRangeInput: string;
   imageImportSettings: ImageImportSettings;
+  exportProfile: ExportProfile;
 }
 
 export interface WorkspaceSnapshot {
@@ -244,8 +247,8 @@ export interface FillFormInput {
 export type FlattenFormInput = FillFormInput;
 
 export interface PdfWriter {
-  mergeDocuments(input: MergeInput): Promise<Uint8Array>;
-  extractPages(input: ExtractInput): Promise<Uint8Array>;
+  mergeDocuments(input: MergeInput & { exportProfile?: ExportProfile }): Promise<Uint8Array>;
+  extractPages(input: ExtractInput & { exportProfile?: ExportProfile }): Promise<Uint8Array>;
   deletePages(input: DeleteInput): Promise<Uint8Array>;
   rotatePages(input: RotateInput): Promise<Uint8Array>;
   reorderPages(input: ReorderInput): Promise<Uint8Array>;
@@ -258,5 +261,6 @@ export interface PdfWriter {
     formValues: Record<string, FormFieldValue>;
     flatten: boolean;
     baseFileName: string;
+    exportProfile?: ExportProfile;
   }): Promise<ExportFileResult[]>;
 }
