@@ -122,7 +122,7 @@ export function Toolbar({
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
               className="w-full border-0 bg-transparent p-0 text-sm text-[color:var(--pm-text-strong)] outline-none placeholder:text-[color:var(--pm-text-faint)]"
-              placeholder="Search pages"
+              placeholder="Search pages by text, label, or number"
             />
           </label>
 
