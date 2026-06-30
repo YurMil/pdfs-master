@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import type { DocumentEntity, DropTargetPosition, PageEntity, ThumbnailDensity, ThumbnailState, ViewMode } from '@/domain/types';
+import { usePdfStore } from '@/store/pdfStore';
 
 interface PageGridProps {
   groups: Array<{ document: DocumentEntity; pages: PageEntity[] }>;
   activeDocumentId?: string;
   selectedPageIds: string[];
-  thumbnails: Record<string, ThumbnailState>;
   viewMode: ViewMode;
   thumbnailDensity: ThumbnailDensity;
   onActivateDocument: (documentId: string) => void;
@@ -45,7 +45,6 @@ export function PageGrid({
   groups,
   activeDocumentId,
   selectedPageIds,
-  thumbnails,
   viewMode,
   thumbnailDensity,
   onActivateDocument,
@@ -121,7 +120,6 @@ export function PageGrid({
                     page={page}
                     document={document}
                     selected={selected.has(page.id)}
-                    thumbnail={thumbnails[page.id]}
                     viewMode={viewMode}
                     thumbnailDensity={thumbnailDensity}
                     externalDropPosition={externalDropTarget?.pageId === page.id ? externalDropTarget.position : null}
@@ -164,7 +162,6 @@ function PageCard({
   page,
   document,
   selected,
-  thumbnail,
   viewMode,
   thumbnailDensity,
   externalDropPosition,
@@ -185,7 +182,6 @@ function PageCard({
   page: PageEntity;
   document: DocumentEntity;
   selected: boolean;
-  thumbnail?: ThumbnailState;
   viewMode: ViewMode;
   thumbnailDensity: ThumbnailDensity;
   externalDropPosition: DropTargetPosition | null;
@@ -205,10 +201,22 @@ function PageCard({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isList = viewMode === 'list';
+  // Subscribe to just this page's thumbnail so a single thumbnail update never
+  // re-renders the whole grid (avoids the O(n²) render storm on large PDFs).
+  const thumbnail = usePdfStore((state) => state.thumbnails[page.id]);
+
+  // Keep the visibility callbacks in a ref so the IntersectionObserver effect
+  // does not re-create the observer on every render — it only needs to react to
+  // whether the thumbnail still requires loading.
+  const callbacksRef = useRef({ onVisible, onInvisible });
+  useEffect(() => {
+    callbacksRef.current = { onVisible, onInvisible };
+  });
+  const needsThumbnail = thumbnail?.status !== 'ready' && thumbnail?.status !== 'error';
 
   useEffect(() => {
     const node = containerRef.current;
-    if (!node || thumbnail?.status === 'ready' || thumbnail?.status === 'error') {
+    if (!node || !needsThumbnail) {
       return;
     }
 
@@ -216,9 +224,9 @@ function PageCard({
       (entries) => {
         const entry = entries[0];
         if (entry?.isIntersecting) {
-          onVisible();
+          callbacksRef.current.onVisible();
         } else {
-          onInvisible?.();
+          callbacksRef.current.onInvisible?.();
         }
       },
       { rootMargin: '120px' },
@@ -226,7 +234,7 @@ function PageCard({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [thumbnail?.status, onVisible, onInvisible]);
+  }, [needsThumbnail]);
 
   const computeDropPosition = (event: React.DragEvent): DropTargetPosition => {
     const bounds = event.currentTarget.getBoundingClientRect();
