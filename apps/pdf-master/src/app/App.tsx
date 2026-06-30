@@ -29,6 +29,7 @@ import { ACCEPT_IMPORT_TYPES } from '@/services/importImage';
 import { DEFAULT_IMAGE_IMPORT_SETTINGS } from '@/domain/paperFormat';
 import { ThumbnailQueue } from '@/services/thumbnailQueue';
 import { usePdfStore } from '@/store/pdfStore';
+import { useShallow } from 'zustand/react/shallow';
 import { makeObjectUrl, revokeObjectUrl } from '@/utils/objectUrl';
 
 interface DeleteDialogState {
@@ -56,7 +57,26 @@ const thumbnailMaxWidth: Record<ThumbnailDensity, number> = {
 };
 
 export function App() {
-  const store = usePdfStore();
+  // Subscribe only to the workspace slices that affect this component's render.
+  // Thumbnails are intentionally excluded — each PageCard subscribes to its own
+  // thumbnail, so per-page thumbnail updates never re-render the whole app.
+  const reactive = usePdfStore(
+    useShallow((state) => ({
+      documents: state.documents,
+      documentOrder: state.documentOrder,
+      pages: state.pages,
+      pageOrder: state.pageOrder,
+      pageOrderByDocument: state.pageOrderByDocument,
+      selectedPageIds: state.selectedPageIds,
+      ui: state.ui,
+      jobs: state.jobs,
+      notifications: state.notifications,
+    })),
+  );
+  // Actions are stable for the store's lifetime; read them once. Spreading the
+  // current snapshot keeps the existing `store.*` call sites working while the
+  // reactive slices above drive re-renders.
+  const store = { ...usePdfStore.getState(), ...reactive };
   const reader = useMemo(() => new PdfjsReader(), []);
   const thumbnailQueue = useMemo(() => new ThumbnailQueue(reader), [reader]);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -649,7 +669,6 @@ export function App() {
                   groups={filteredGroups}
                   activeDocumentId={store.ui.activeDocumentId}
                   selectedPageIds={store.selectedPageIds}
-                  thumbnails={store.thumbnails}
                   viewMode={store.ui.viewMode}
                   thumbnailDensity={thumbnailDensity}
                   onActivateDocument={store.setActiveDocument}

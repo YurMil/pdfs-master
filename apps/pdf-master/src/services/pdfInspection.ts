@@ -10,12 +10,22 @@ import type { PDFField } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { FormFieldModel, IngestDocumentPayload } from '@/domain/types';
 
+/** Hard caps so a single large/scanned PDF cannot freeze or OOM the ingest worker. */
+const MAX_TEXT_EXTRACTION_PAGES = 500;
+const MAX_TEXT_CHARS_PER_PAGE = 20_000;
+const TEXT_EXTRACTION_TIMEOUT_MS = 15_000;
+
 export async function inspectPdfFile(file: File, documentId: string): Promise<IngestDocumentPayload> {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const [pdf, pageTextContent] = await Promise.all([
-    PDFDocument.load(bytes.slice(), { updateMetadata: false }),
-    extractPageTextContent(bytes.slice()),
-  ]);
+  // Parse structure/metadata first — this is the essential part of an import.
+  // pdf-lib fully parses on load(), so `bytes` is free to hand to pdf.js afterwards.
+  const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
+
+  // Text extraction only powers the optional full-text search. It must never be
+  // able to block or fail the import, so it runs after load with a timeout and
+  // falls back to no text on any error.
+  const pageTextContent = await extractPageTextContent(bytes, pdf.getPageCount());
+
   const pages = pdf.getPages().map((page, index) => {
     const size = page.getSize();
     return {
@@ -53,7 +63,35 @@ export async function inspectPdfFile(file: File, documentId: string): Promise<In
   };
 }
 
-async function extractPageTextContent(bytes: Uint8Array): Promise<string[]> {
+/**
+ * Extracts per-page text for full-text search. Always resolves: any failure or
+ * timeout yields an empty array so the document still imports (just without
+ * searchable text). Bounded by page count, per-page length, and a wall-clock
+ * timeout to keep large/scanned PDFs from hanging the worker.
+ */
+async function extractPageTextContent(bytes: Uint8Array, pageCount: number): Promise<string[]> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      runTextExtraction(bytes.slice(), pageCount),
+      new Promise<string[]>((_resolve, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('Text extraction timed out.')),
+          TEXT_EXTRACTION_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch {
+    // Non-fatal: the import succeeds without searchable text.
+    return [];
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+async function runTextExtraction(bytes: Uint8Array, pageCount: number): Promise<string[]> {
   const loadingTask = pdfjs.getDocument({
     data: bytes,
     disableWorker: true,
@@ -64,8 +102,9 @@ async function extractPageTextContent(bytes: Uint8Array): Promise<string[]> {
 
   try {
     const textContent: string[] = [];
+    const limit = Math.min(pdf.numPages, pageCount, MAX_TEXT_EXTRACTION_PAGES);
 
-    for (let index = 1; index <= pdf.numPages; index += 1) {
+    for (let index = 1; index <= limit; index += 1) {
       const page = await pdf.getPage(index);
       try {
         const content = await page.getTextContent();
@@ -73,8 +112,12 @@ async function extractPageTextContent(bytes: Uint8Array): Promise<string[]> {
           content.items
             .map((item) => ('str' in item ? item.str : ''))
             .join(' ')
-            .trim(),
+            .trim()
+            .slice(0, MAX_TEXT_CHARS_PER_PAGE),
         );
+      } catch {
+        // Skip pages whose text cannot be read; search just won't match them.
+        textContent.push('');
       } finally {
         page.cleanup();
       }
