@@ -70,28 +70,26 @@ export async function inspectPdfFile(file: File, documentId: string): Promise<In
  * timeout to keep large/scanned PDFs from hanging the worker.
  */
 async function extractPageTextContent(bytes: Uint8Array, pageCount: number): Promise<string[]> {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  // An AbortController actually stops the extraction loop on timeout (a plain
+  // Promise.race would leave it running in the background). `bytes` is passed
+  // directly — pdf-lib has already finished parsing, so no copy is needed.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TEXT_EXTRACTION_TIMEOUT_MS);
   try {
-    return await Promise.race([
-      runTextExtraction(bytes.slice(), pageCount),
-      new Promise<string[]>((_resolve, reject) => {
-        timeoutId = setTimeout(
-          () => reject(new Error('Text extraction timed out.')),
-          TEXT_EXTRACTION_TIMEOUT_MS,
-        );
-      }),
-    ]);
+    return await runTextExtraction(bytes, pageCount, controller.signal);
   } catch {
     // Non-fatal: the import succeeds without searchable text.
     return [];
   } finally {
-    if (timeoutId !== undefined) {
-      clearTimeout(timeoutId);
-    }
+    clearTimeout(timeoutId);
   }
 }
 
-async function runTextExtraction(bytes: Uint8Array, pageCount: number): Promise<string[]> {
+async function runTextExtraction(
+  bytes: Uint8Array,
+  pageCount: number,
+  signal?: AbortSignal,
+): Promise<string[]> {
   const loadingTask = pdfjs.getDocument({
     data: bytes,
     disableWorker: true,
@@ -105,6 +103,9 @@ async function runTextExtraction(bytes: Uint8Array, pageCount: number): Promise<
     const limit = Math.min(pdf.numPages, pageCount, MAX_TEXT_EXTRACTION_PAGES);
 
     for (let index = 1; index <= limit; index += 1) {
+      if (signal?.aborted) {
+        throw new Error('Text extraction aborted.');
+      }
       const page = await pdf.getPage(index);
       try {
         const content = await page.getTextContent();
