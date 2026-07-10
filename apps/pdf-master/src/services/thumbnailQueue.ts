@@ -80,7 +80,7 @@ export class ThumbnailQueue {
 
     let runTask: () => Promise<Blob>;
 
-    if (this.workerAvailable && this.getActiveWorkers().length > 0) {
+    if (this.workerAvailable && this.getActiveWorkers().length > 0 && request.sourceUrl) {
       const client = this.getWorkerForDocument(request.documentId);
       runTask = async () => {
         try {

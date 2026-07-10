@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+import workerSrc from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist/types/src/display/api';
 import clsx from 'clsx';
