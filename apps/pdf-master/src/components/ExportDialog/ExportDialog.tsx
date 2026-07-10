@@ -1,9 +1,10 @@
 import clsx from 'clsx';
-import type { DocumentEntity, ExportMode } from '@/domain/types';
+import type { DocumentEntity, ExportMode, ExportProfile } from '@/domain/types';
 
 interface ExportDialogProps {
   open: boolean;
   exportMode: ExportMode;
+  exportProfile: ExportProfile;
   fileName: string;
   splitRangeInput: string;
   activeDocument?: DocumentEntity;
@@ -13,12 +14,14 @@ interface ExportDialogProps {
   onFileNameChange: (value: string) => void;
   onModeChange: (mode: ExportMode) => void;
   onSplitRangeChange: (value: string) => void;
+  onProfileChange: (profile: ExportProfile) => void;
   onSubmit: () => void;
 }
 
 export function ExportDialog({
   open,
   exportMode,
+  exportProfile,
   fileName,
   splitRangeInput,
   activeDocument,
@@ -28,6 +31,7 @@ export function ExportDialog({
   onFileNameChange,
   onModeChange,
   onSplitRangeChange,
+  onProfileChange,
   onSubmit,
 }: ExportDialogProps) {
   if (!open) {
@@ -90,6 +94,21 @@ export function ExportDialog({
               className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
               placeholder="pdf-master-export"
             />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-[color:var(--pm-text-strong)]">Export profile</span>
+            <select
+              value={exportProfile}
+              onChange={(event) => onProfileChange(event.target.value as ExportProfile)}
+              className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
+            >
+              <option value="lossless">Lossless (best quality)</option>
+              <option value="low-size">Low size (compressed)</option>
+            </select>
+            <p className="mt-2 text-xs leading-5 text-[color:var(--pm-text-muted)]">
+              Lossless preserves full quality. Low size uses object streams and compression to reduce file size.
+            </p>
           </label>
 
           {exportMode.kind === 'split' ? (

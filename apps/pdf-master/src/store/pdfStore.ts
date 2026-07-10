@@ -14,6 +14,7 @@ import {
 import type {
   DropTargetPosition,
   ExportMode,
+  ExportProfile,
   FormFieldValue,
   ImageImportSettings,
   JobKind,
@@ -49,6 +50,7 @@ interface PdfStoreActions {
   setExportMode: (mode: ExportMode) => void;
   setExportFileName: (name: string) => void;
   setSplitRangeInput: (value: string) => void;
+  setExportProfile: (profile: ExportProfile) => void;
   setThumbnailState: (pageId: string, nextState: ThumbnailState) => void;
   clearThumbnail: (pageId: string) => void;
   updateFormField: (documentId: string, fieldName: string, value: FormFieldValue) => void;
@@ -87,6 +89,7 @@ function createInitialState(): PdfAppState {
       exportFileName: 'pdf-master-export',
       splitRangeInput: '1-2;3-4',
       imageImportSettings: { ...DEFAULT_IMAGE_IMPORT_SETTINGS },
+      exportProfile: 'lossless',
     },
     notifications: [],
   };
@@ -381,6 +384,12 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
     }));
   },
 
+  setExportProfile: (profile: ExportProfile) => {
+    set((state) => ({
+      ui: { ...state.ui, exportProfile: profile },
+    }));
+  },
+
   setThumbnailState: (pageId, nextState) => {
     set((state) => ({
       thumbnails: {
@@ -481,6 +490,7 @@ export const usePdfStore = create<PdfStore>((set, get) => ({
           height: page.height,
           rotation: 0,
           label: page.label,
+          textContent: page.textContent,
         };
         newPageIds.push(page.id);
       }

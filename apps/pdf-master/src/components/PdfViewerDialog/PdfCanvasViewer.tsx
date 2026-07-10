@@ -30,8 +30,11 @@ const PAGE_OVERSCAN = 1;
 
 export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProps) {
   const environment = useMemo(() => getThumbnailRenderEnvironment(), []);
-  const renderQueueRef = useRef(
-    new PromiseQueue<void>(resolveViewerRenderConcurrency(environment.hardwareConcurrency)),
+  // Lazily created once and kept stable for the component's lifetime. Held in
+  // state (not a ref) so it can be read safely during render when passed to
+  // each ViewerPage.
+  const [renderQueue] = useState(
+    () => new PromiseQueue<void>(resolveViewerRenderConcurrency(environment.hardwareConcurrency)),
   );
   const pageRefs = useRef<Array<HTMLDivElement | null>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -50,13 +53,20 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
   const [pageWindow, setPageWindow] = useState({ start: 0, end: 0 });
   const [zoomPercent, setZoomPercent] = useState(100);
   const [currentPageNumber, setCurrentPageNumber] = useState(initialPageNumber);
+  const [loadedBlob, setLoadedBlob] = useState(blob);
+
+  // Reset to the loading state synchronously when a new blob arrives. Doing this
+  // during render (React's sanctioned "reset state on prop change" pattern)
+  // avoids an extra render compared to resetting inside the load effect.
+  if (blob !== loadedBlob) {
+    setLoadedBlob(blob);
+    setDocumentState({ status: 'loading', pageMetrics: [] });
+  }
 
   useEffect(() => {
     let cancelled = false;
     let loadingTask: PDFDocumentLoadingTask | null = null;
     let pdfDocument: PDFDocumentProxy | null = null;
-
-    setDocumentState({ status: 'loading', pageMetrics: [] });
 
     void blob
       .arrayBuffer()
@@ -259,7 +269,8 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
 
     lastJumpedPageRef.current = initialPageNumber;
     targetNode.scrollIntoView({ block: 'start' });
-    setCurrentPageNumber(initialPageNumber);
+    // currentPageNumber already starts at initialPageNumber and is kept in sync
+    // by the scroll handler, so no setState is needed here.
   }, [documentState.pdfDocument, initialPageNumber, pageLayout]);
 
   const totalPages = documentState.pageMetrics.length;
@@ -328,7 +339,7 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
                       pageNumber={index + 1}
                       scale={layout.scale}
                       shouldRender={shouldRender}
-                      renderQueue={renderQueueRef.current}
+                      renderQueue={renderQueue}
                       enableHardwareAcceleration={environment.supportsHardwareAcceleration}
                       className={clsx(
                         currentPageNumber === index + 1 && 'ring-2 ring-[color:var(--pm-accent-strong)] ring-offset-2 ring-offset-[color:var(--pm-border-subtle)]',

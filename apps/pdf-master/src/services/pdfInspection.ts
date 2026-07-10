@@ -7,10 +7,25 @@ import {
   PDFTextField,
 } from 'pdf-lib';
 import type { PDFField } from 'pdf-lib';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { FormFieldModel, IngestDocumentPayload } from '@/domain/types';
 
+/** Hard caps so a single large/scanned PDF cannot freeze or OOM the ingest worker. */
+const MAX_TEXT_EXTRACTION_PAGES = 500;
+const MAX_TEXT_CHARS_PER_PAGE = 20_000;
+const TEXT_EXTRACTION_TIMEOUT_MS = 15_000;
+
 export async function inspectPdfFile(file: File, documentId: string): Promise<IngestDocumentPayload> {
-  const pdf = await PDFDocument.load(await file.arrayBuffer(), { updateMetadata: false });
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  // Parse structure/metadata first — this is the essential part of an import.
+  // pdf-lib fully parses on load(), so `bytes` is free to hand to pdf.js afterwards.
+  const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
+
+  // Text extraction only powers the optional full-text search. It must never be
+  // able to block or fail the import, so it runs after load with a timeout and
+  // falls back to no text on any error.
+  const pageTextContent = await extractPageTextContent(bytes, pdf.getPageCount());
+
   const pages = pdf.getPages().map((page, index) => {
     const size = page.getSize();
     return {
@@ -19,6 +34,7 @@ export async function inspectPdfFile(file: File, documentId: string): Promise<In
       width: size.width,
       height: size.height,
       label: `Page ${index + 1}`,
+      textContent: pageTextContent[index],
     };
   });
 
@@ -45,6 +61,74 @@ export async function inspectPdfFile(file: File, documentId: string): Promise<In
     formFields: fields,
     pages,
   };
+}
+
+/**
+ * Extracts per-page text for full-text search. Always resolves: any failure or
+ * timeout yields an empty array so the document still imports (just without
+ * searchable text). Bounded by page count, per-page length, and a wall-clock
+ * timeout to keep large/scanned PDFs from hanging the worker.
+ */
+async function extractPageTextContent(bytes: Uint8Array, pageCount: number): Promise<string[]> {
+  // An AbortController actually stops the extraction loop on timeout (a plain
+  // Promise.race would leave it running in the background). `bytes` is passed
+  // directly — pdf-lib has already finished parsing, so no copy is needed.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TEXT_EXTRACTION_TIMEOUT_MS);
+  try {
+    return await runTextExtraction(bytes, pageCount, controller.signal);
+  } catch {
+    // Non-fatal: the import succeeds without searchable text.
+    return [];
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function runTextExtraction(
+  bytes: Uint8Array,
+  pageCount: number,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const loadingTask = pdfjs.getDocument({
+    data: bytes,
+    disableWorker: true,
+    stopAtErrors: false,
+  } as Parameters<typeof pdfjs.getDocument>[0] & { disableWorker: boolean });
+
+  const pdf = await loadingTask.promise;
+
+  try {
+    const textContent: string[] = [];
+    const limit = Math.min(pdf.numPages, pageCount, MAX_TEXT_EXTRACTION_PAGES);
+
+    for (let index = 1; index <= limit; index += 1) {
+      if (signal?.aborted) {
+        throw new Error('Text extraction aborted.');
+      }
+      const page = await pdf.getPage(index);
+      try {
+        const content = await page.getTextContent();
+        textContent.push(
+          content.items
+            .map((item) => ('str' in item ? item.str : ''))
+            .join(' ')
+            .trim()
+            .slice(0, MAX_TEXT_CHARS_PER_PAGE),
+        );
+      } catch {
+        // Skip pages whose text cannot be read; search just won't match them.
+        textContent.push('');
+      } finally {
+        page.cleanup();
+      }
+    }
+
+    return textContent;
+  } finally {
+    await pdf.destroy();
+    loadingTask.destroy();
+  }
 }
 
 function readFormField(field: PDFField): FormFieldModel {

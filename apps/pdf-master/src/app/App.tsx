@@ -29,6 +29,7 @@ import { ACCEPT_IMPORT_TYPES } from '@/services/importImage';
 import { DEFAULT_IMAGE_IMPORT_SETTINGS } from '@/domain/paperFormat';
 import { ThumbnailQueue } from '@/services/thumbnailQueue';
 import { usePdfStore } from '@/store/pdfStore';
+import { useShallow } from 'zustand/react/shallow';
 import { makeObjectUrl, revokeObjectUrl } from '@/utils/objectUrl';
 
 interface DeleteDialogState {
@@ -56,7 +57,45 @@ const thumbnailMaxWidth: Record<ThumbnailDensity, number> = {
 };
 
 export function App() {
-  const store = usePdfStore();
+  // Subscribe only to the workspace slices that affect this component's render,
+  // plus the (stable) actions used here. Thumbnails are intentionally excluded —
+  // each PageCard subscribes to its own thumbnail, so per-page thumbnail updates
+  // never re-render the whole app. Including the actions in the selector keeps
+  // them reactive-safe and avoids mixing stale non-reactive state.
+  const store = usePdfStore(
+    useShallow((state) => ({
+      documents: state.documents,
+      documentOrder: state.documentOrder,
+      pages: state.pages,
+      pageOrder: state.pageOrder,
+      pageOrderByDocument: state.pageOrderByDocument,
+      selectedPageIds: state.selectedPageIds,
+      ui: state.ui,
+      jobs: state.jobs,
+      notifications: state.notifications,
+      setJob: state.setJob,
+      setViewMode: state.setViewMode,
+      setActiveDocument: state.setActiveDocument,
+      selectPage: state.selectPage,
+      selectAllDocumentPages: state.selectAllDocumentPages,
+      clearSelection: state.clearSelection,
+      reorderPages: state.reorderPages,
+      reorderDocuments: state.reorderDocuments,
+      rotateSelectedPages: state.rotateSelectedPages,
+      deleteSelectedPages: state.deleteSelectedPages,
+      removeDocument: state.removeDocument,
+      updateFormField: state.updateFormField,
+      setDocumentFlattening: state.setDocumentFlattening,
+      openExportDialog: state.openExportDialog,
+      closeExportDialog: state.closeExportDialog,
+      setExportMode: state.setExportMode,
+      setExportFileName: state.setExportFileName,
+      setSplitRangeInput: state.setSplitRangeInput,
+      setExportProfile: state.setExportProfile,
+      dismissNotification: state.dismissNotification,
+      setImageImportSettings: state.setImageImportSettings,
+    })),
+  );
   const reader = useMemo(() => new PdfjsReader(), []);
   const thumbnailQueue = useMemo(() => new ThumbnailQueue(reader), [reader]);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +156,19 @@ export function App() {
       }),
     [orderedDocuments, store.pageOrderByDocument, store.pages],
   );
+  const pageTextSearchIndex = useMemo(() => {
+    const index = new Map<string, string>();
+
+    for (const { pages } of groupedPages) {
+      for (const page of pages) {
+        if (page.textContent) {
+          index.set(page.id, page.textContent.toLowerCase());
+        }
+      }
+    }
+
+    return index;
+  }, [groupedPages]);
 
   const filteredGroups = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -132,7 +184,8 @@ export function App() {
           : pages.filter(
               (page) =>
                 page.label.toLowerCase().includes(query) ||
-                String(page.sourcePageIndex + 1).includes(query),
+                String(page.sourcePageIndex + 1).includes(query) ||
+                pageTextSearchIndex.get(page.id)?.includes(query),
             );
 
         if (!matchingPages.length) {
@@ -142,7 +195,7 @@ export function App() {
         return { document, pages: matchingPages };
       })
       .filter(Boolean) as typeof groupedPages;
-  }, [groupedPages, searchQuery]);
+  }, [groupedPages, pageTextSearchIndex, searchQuery]);
 
   const workspaceRevision = useMemo(
     () =>
@@ -327,7 +380,7 @@ export function App() {
 
     snapshot.setJob('export', { status: 'running', progress: 5, message: 'Preparing export...' });
     try {
-      const files = await runExport(snapshot, mode, snapshot.ui.exportFileName, (progress, message) => {
+      const files = await runExport(snapshot, mode, snapshot.ui.exportFileName, snapshot.ui.exportProfile, (progress, message) => {
         usePdfStore.getState().setJob('export', { status: 'running', progress, message });
       });
       downloadExportFiles(files);
@@ -405,7 +458,7 @@ export function App() {
     }));
 
     try {
-      const files = await runExport(snapshot, { kind: 'workspace' }, snapshot.ui.exportFileName || 'pdf-master-viewer', (progress, message) => {
+      const files = await runExport(snapshot, { kind: 'workspace' }, snapshot.ui.exportFileName || 'pdf-master-viewer', snapshot.ui.exportProfile, (progress, message) => {
         if (viewerRequestRef.current !== requestId) {
           return;
         }
@@ -635,7 +688,6 @@ export function App() {
                   groups={filteredGroups}
                   activeDocumentId={store.ui.activeDocumentId}
                   selectedPageIds={store.selectedPageIds}
-                  thumbnails={store.thumbnails}
                   viewMode={store.ui.viewMode}
                   thumbnailDensity={thumbnailDensity}
                   onActivateDocument={store.setActiveDocument}
@@ -671,7 +723,7 @@ export function App() {
                 <div className="p-4">
                   <EmptyState
                     title="No pages match this search"
-                    description="Try a page number, page label, or clear the search field to return to the full workspace."
+                    description="Try a page number, page label, text content, or clear the search field to return to the full workspace."
                   />
                 </div>
               )
@@ -800,6 +852,7 @@ export function App() {
       <ExportDialog
         open={store.ui.exportDialogOpen}
         exportMode={store.ui.exportMode}
+        exportProfile={store.ui.exportProfile}
         fileName={store.ui.exportFileName}
         splitRangeInput={store.ui.splitRangeInput}
         activeDocument={activeDocument}
@@ -815,6 +868,7 @@ export function App() {
           store.setExportMode(mode);
         }}
         onSplitRangeChange={store.setSplitRangeInput}
+        onProfileChange={store.setExportProfile}
         onSubmit={handleExport}
       />
     </>
