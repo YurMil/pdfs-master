@@ -82,7 +82,29 @@ export class ThumbnailQueue {
 
     if (this.workerAvailable && this.getActiveWorkers().length > 0) {
       const client = this.getWorkerForDocument(request.documentId);
-      runTask = () => client.queue.add(() => this.renderViaWorker(client, request, controller, workerRequestId));
+      runTask = async () => {
+        try {
+          return await client.queue.add(() => this.renderViaWorker(client, request, controller, workerRequestId));
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            throw error;
+          }
+          if (controller.signal.aborted) {
+            throw new DOMException('Thumbnail rendering canceled.', 'AbortError');
+          }
+          // Fall back to main-thread rendering
+          return await this.fallbackQueue.add(() =>
+            this.reader.renderPageThumbnail({
+              documentId: request.documentId,
+              sourceFile: request.sourceFile,
+              sourceUrl: request.sourceUrl,
+              pageIndex: request.pageIndex,
+              maxWidth: request.maxWidth,
+              signal: controller.signal,
+            })
+          );
+        }
+      };
     } else {
       runTask = () =>
         this.fallbackQueue.add(() =>
@@ -167,6 +189,12 @@ export class ThumbnailQueue {
     client.busy = true;
 
     return new Promise<Blob>((resolve, reject) => {
+      if (client.terminated) {
+        client.busy = false;
+        reject(new PdfMasterError(ErrorCode.WorkerFailed, 'Render worker is terminated.'));
+        return;
+      }
+
       const signal = controller.signal;
       const cleanup = () => {
         clearTimeout(timeoutId);

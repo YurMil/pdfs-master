@@ -1,8 +1,10 @@
-/// <reference lib="webworker" />
+import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist/types/src/display/api';
 import { ErrorCode, PdfMasterError, toErrorModel } from '@/domain/errors';
 import { getCanvas2dContextSettings, getThumbnailRenderEnvironment } from '@/utils/thumbnailRendering';
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 import type {
   RenderWorkerCancelRequest,
   RenderWorkerMessage,
