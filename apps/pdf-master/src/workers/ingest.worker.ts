@@ -18,8 +18,15 @@ self.onmessage = async (event: MessageEvent<IngestWorkerMessage>) => {
     };
     self.postMessage(response);
   } catch (error) {
+    // pdf.js reports its cases through `name`, and a password-protected file
+    // throws PasswordException with the message "No password given" — which
+    // does not contain "encrypted", so matching on the message alone
+    // misreported every locked PDF as corrupt (cadautoscript.com#100).
+    const name = (error as {name?: unknown} | null)?.name;
     const messageText = error instanceof Error ? error.message.toLowerCase() : '';
-    const fallbackCode = messageText.includes('encrypted') ? ErrorCode.EncryptedPdf : ErrorCode.InvalidPdf;
+    const isEncrypted =
+      name === 'PasswordException' || messageText.includes('encrypted') || messageText.includes('password');
+    const fallbackCode = isEncrypted ? ErrorCode.EncryptedPdf : ErrorCode.InvalidPdf;
     const response: IngestWorkerResponse = {
       type: 'ingest:error',
       requestId: message.requestId,

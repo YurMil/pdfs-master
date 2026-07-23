@@ -1,4 +1,4 @@
-import { validatePdfFile, validateImportFile, isImageFile } from '@/domain/validation';
+import { assertPdfSignature, validatePdfFile, validateImportFile, isImageFile } from '@/domain/validation';
 import { toErrorModel } from '@/domain/errors';
 import type {
   ErrorModel,
@@ -51,6 +51,7 @@ export async function importFiles(
         pdfFiles.push(result.pdfFile);
         originalImages.set(result.pdfFile, file);
       } else {
+        await assertPdfSignature(file);
         pdfFiles.push(file);
       }
     } catch (error) {
@@ -105,6 +106,7 @@ async function importPdfFilesInternal(
     const worker = new Worker(new URL('../workers/ingest.worker.ts', import.meta.url), { type: 'module' });
     try {
       validatePdfFile(file);
+      await assertPdfSignature(file);
       const sourceFile: SourceFileModel = {
         id: createId('source'),
         name: file.name,

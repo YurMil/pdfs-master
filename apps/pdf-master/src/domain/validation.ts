@@ -52,6 +52,40 @@ export function validatePdfFile(file: File): void {
   }
 }
 
+const PDF_MAGIC = '%PDF-';
+
+/**
+ * Confirms the file really starts with the PDF signature.
+ *
+ * MIME type and extension are both trivially wrong: `isPdfFile` accepts an
+ * empty `type`, so a renamed .docx or an HTML error page saved as .pdf passes
+ * every synchronous check and only fails later inside the parser, with an
+ * opaque message (cadautoscript.com#100). Reads 5 bytes, so it stays cheap
+ * regardless of file size.
+ */
+export async function assertPdfSignature(file: File): Promise<void> {
+  const head = file.slice(0, PDF_MAGIC.length);
+  if (typeof head.arrayBuffer !== 'function') {
+    // No Blob.arrayBuffer in this environment. This check is defence in depth,
+    // not a security boundary, so skip it rather than reject every file.
+    return;
+  }
+
+  let signature: string;
+  try {
+    signature = new TextDecoder('latin1').decode(new Uint8Array(await head.arrayBuffer()));
+  } catch {
+    throw new PdfMasterError(ErrorCode.InvalidPdf, `${file.name} could not be read.`);
+  }
+
+  if (signature !== PDF_MAGIC) {
+    throw new PdfMasterError(
+      ErrorCode.InvalidFileType,
+      `${file.name} is not a PDF file — its contents do not start with the PDF signature.`,
+    );
+  }
+}
+
 export function parseRangeGroups(input: string, pageCount: number): number[][] {
   const trimmed = input.trim();
   if (!trimmed) {
