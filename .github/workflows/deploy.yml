@@ -27,6 +27,10 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      # Runs before the build so a regression merged to main cannot deploy.
+      - name: Run unit tests
+        run: pnpm test
+
       - name: Build Static App
         run: pnpm run build
 
