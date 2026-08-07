@@ -23,14 +23,14 @@ export function ConfirmDialog({ open, title, description, confirmLabel, onCancel
         <div className="flex items-center justify-end gap-2 px-5 py-4">
           <button
             type="button"
-            className="rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
+            className="rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm font-medium min-h-11 sm:min-h-0 text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="rounded-lg border border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger)] px-3 py-2 text-sm font-medium text-[color:var(--pm-on-accent)] hover:bg-[color:var(--pm-danger)]"
+            className="rounded-lg border border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger)] px-3 py-2 text-sm font-medium min-h-11 sm:min-h-0 text-[color:var(--pm-on-accent)] hover:bg-[color:var(--pm-danger)]"
             onClick={onConfirm}
           >
             {confirmLabel}

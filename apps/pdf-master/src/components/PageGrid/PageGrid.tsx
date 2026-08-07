@@ -336,7 +336,7 @@ function PageCard({
               aria-label={selected ? 'Remove page from selection' : 'Select page'}
               title={selected ? 'Remove page from selection' : 'Select page'}
               className={clsx(
-                'absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border shadow-sm transition',
+                'pm-page-select-toggle absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border shadow-sm transition',
                 selected
                   ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent)] text-[color:var(--pm-on-accent)]'
                   : 'border-[color:var(--pm-border)] bg-[color:var(--pm-surface)]/95 text-[color:var(--pm-text-muted)] hover:border-[color:var(--pm-accent-strong)] hover:text-[color:var(--pm-accent-strong)]',
@@ -444,7 +444,7 @@ function PageActionButton({
       aria-label={label}
       title={label}
       className={clsx(
-        'inline-flex h-7 w-7 items-center justify-center rounded-lg border transition',
+        'pm-page-select-toggle inline-flex h-7 w-7 items-center justify-center rounded-lg border transition',
         tone === 'danger'
           ? 'border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger-surface)] text-[color:var(--pm-danger-text)] hover:bg-[color:var(--pm-danger-surface-hover)]'
           : 'border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)] text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]',

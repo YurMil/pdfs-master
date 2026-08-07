@@ -7,7 +7,9 @@ interface NotificationsProps {
 
 export function Notifications({ notifications, onDismiss }: NotificationsProps) {
   return (
-    <div className="pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-3">
+    // `right-4` with a full-width box pushed the toast off the left edge on a
+    // phone; pin it to both edges below sm instead.
+    <div className="pointer-events-none fixed inset-x-3 top-3 z-50 flex flex-col gap-3 sm:inset-x-auto sm:right-4 sm:top-4 sm:w-full sm:max-w-sm">
       {notifications.map((notification) => (
         <div
           key={notification.id}
@@ -20,7 +22,7 @@ export function Notifications({ notifications, onDismiss }: NotificationsProps) 
             </div>
             <button
               type="button"
-              className="rounded-full bg-[color:var(--pm-surface-hover)] px-2 py-1 text-xs text-[color:var(--pm-text-muted)]"
+              className="min-h-9 shrink-0 rounded-full bg-[color:var(--pm-surface-hover)] px-3 py-1 text-xs text-[color:var(--pm-text-muted)] sm:min-h-0 sm:px-2"
               onClick={() => onDismiss(notification.id)}
             >
               Close

@@ -39,8 +39,10 @@ export function ExportDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[color:var(--pm-overlay)] px-4 py-8 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-2xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] shadow-2xl">
+    // The dialog is taller than a phone screen once the split fields appear, so
+    // it scrolls inside itself instead of spilling past the viewport.
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[color:var(--pm-overlay)] px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-8">
+      <div className="flex max-h-full w-full max-w-2xl flex-col overflow-y-auto rounded-2xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div className="px-5 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">Export</p>
@@ -91,7 +93,7 @@ export function ExportDialog({
             <input
               value={fileName}
               onChange={(event) => onFileNameChange(event.target.value)}
-              className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
+              className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-base text-[color:var(--pm-text-strong)] sm:text-sm"
               placeholder="pdf-master-export"
             />
           </label>
@@ -101,7 +103,7 @@ export function ExportDialog({
             <select
               value={exportProfile}
               onChange={(event) => onProfileChange(event.target.value as ExportProfile)}
-              className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
+              className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-base text-[color:var(--pm-text-strong)] sm:text-sm"
             >
               <option value="lossless">Lossless (best quality)</option>
               <option value="low-size">Low size (compressed)</option>
@@ -117,7 +119,7 @@ export function ExportDialog({
               <input
                 value={splitRangeInput}
                 onChange={(event) => onSplitRangeChange(event.target.value)}
-                className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-sm text-[color:var(--pm-text-strong)]"
+                className="w-full rounded-lg border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-2.5 text-base text-[color:var(--pm-text-strong)] sm:text-sm"
                 placeholder="1-3;4-6;7-10"
               />
               <p className="mt-2 text-xs leading-5 text-[color:var(--pm-text-muted)]">Use commas inside one output file and semicolons to create separate PDFs. Example: `1-3,5;6-8`.</p>
@@ -125,7 +127,7 @@ export function ExportDialog({
           ) : null}
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[color:var(--pm-border-subtle)] px-5 py-4">
+        <div className="pm-safe-bottom mt-4 flex flex-col gap-3 border-t border-[color:var(--pm-border-subtle)] px-5 pt-4 sm:flex-row sm:items-center sm:justify-between sm:pb-4">
           <p className="text-sm text-[color:var(--pm-text-muted)]">
             {exportMode.kind === 'workspace' && 'The full workspace order will be exported as one PDF.'}
             {exportMode.kind === 'selection' && 'Only the currently selected pages will be exported.'}
@@ -133,7 +135,7 @@ export function ExportDialog({
           </p>
           <button
             type="button"
-            className="rounded-lg bg-[color:var(--pm-accent)] px-4 py-2.5 text-sm font-medium text-[color:var(--pm-on-accent)] hover:bg-[color:var(--pm-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-11 shrink-0 rounded-lg bg-[color:var(--pm-accent)] px-4 text-sm font-medium text-[color:var(--pm-on-accent)] hover:bg-[color:var(--pm-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:py-2.5"
             onClick={onSubmit}
             disabled={exportMode.kind === 'selection' ? !selectedCount : exportMode.kind === 'split' ? !activeDocument : !pageCount}
           >

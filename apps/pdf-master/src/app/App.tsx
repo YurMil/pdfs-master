@@ -604,7 +604,7 @@ export function App() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="flex min-h-screen flex-col"
+        className="pm-app-shell flex flex-col"
       >
         <Toolbar
           hasWorkspace={hasWorkspace}

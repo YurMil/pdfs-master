@@ -170,7 +170,9 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
       return [];
     }
 
-    const availableWidth = Math.max(160, containerWidth - PAGE_PADDING_PX * 2);
+    // A phone cannot spare 48px of side gutter, so the page gets the width back.
+    const pagePadding = containerWidth < 640 ? 8 : PAGE_PADDING_PX;
+    const availableWidth = Math.max(160, containerWidth - pagePadding * 2);
     let top = PAGE_GAP_PX;
 
     return documentState.pageMetrics.map((metrics) => {
@@ -280,27 +282,28 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[color:var(--pm-border-subtle)]">
-      <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-4 py-3">
-        <div className="rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)] px-2.5 py-1 text-sm font-medium text-[color:var(--pm-text)]">
+      <div className="pm-scroll-x flex items-center gap-2 border-b border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-4 py-2 sm:flex-wrap sm:overflow-visible sm:py-3">
+        <div className="shrink-0 whitespace-nowrap rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface-hover)] px-2.5 py-1.5 text-sm font-medium text-[color:var(--pm-text)] sm:py-1">
           Page {currentPageNumber} / {Math.max(totalPages, 1)}
         </div>
-        <div className="flex items-center gap-1 rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] p-1">
+        <div className="flex shrink-0 items-center gap-1 rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] p-1">
           <ViewerToolbarButton label="Zoom out" disabled={!canZoomOut} onClick={() => setZoomPercent((current) => Math.max(60, current - 10))}>
             -
           </ViewerToolbarButton>
-          <div className="min-w-[64px] text-center text-sm font-medium text-[color:var(--pm-text)]">{zoomPercent}%</div>
+          <div className="min-w-[56px] text-center text-sm font-medium text-[color:var(--pm-text)] sm:min-w-[64px]">{zoomPercent}%</div>
           <ViewerToolbarButton label="Zoom in" disabled={!canZoomIn} onClick={() => setZoomPercent((current) => Math.min(180, current + 10))}>
             +
           </ViewerToolbarButton>
         </div>
         <button
           type="button"
-          className="rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 py-1.5 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
+          className="h-9 shrink-0 whitespace-nowrap rounded-md border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] px-3 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)] sm:h-auto sm:py-1.5"
           onClick={() => setZoomPercent(100)}
         >
           Fit width
         </button>
-        <span className="text-xs text-[color:var(--pm-text-muted)]">
+        {/* Diagnostics: useful on a desktop, pure noise in a phone-width strip. */}
+        <span className="hidden text-xs text-[color:var(--pm-text-muted)] sm:inline">
           Optimized canvas viewer. HWA: {environment.supportsHardwareAcceleration ? 'on' : 'off'} · parallel renders:{' '}
           {resolveViewerRenderConcurrency(environment.hardwareConcurrency)}
         </span>
@@ -314,7 +317,7 @@ export function PdfCanvasViewer({ blob, initialPageNumber }: PdfCanvasViewerProp
           <p className="mt-2 max-w-xl text-sm leading-6 text-[color:var(--pm-text-muted)]">{documentState.error}</p>
         </div>
       ) : (
-        <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4">
           {pageLayout.length ? (
             <div className="relative mx-auto w-full" style={{ height: `${Math.max(contentHeight, containerHeight)}px` }}>
               {pageLayout.map((layout, index) => {

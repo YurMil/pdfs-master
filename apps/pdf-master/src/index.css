@@ -114,12 +114,42 @@ html,
 body,
 #root {
   min-height: 100vh;
+  /* Mobile browser chrome eats into 100vh; dvh tracks the real viewport so the
+     sticky toolbar and status bar stay on screen as the address bar collapses. */
+  min-height: 100dvh;
 }
 
 body {
   margin: 0;
   background: inherit;
   color: var(--pm-text-strong);
+  /* Stop iOS from inflating text in the narrow columns. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Shell height: matches the html/body dvh rule above. */
+.pm-app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* A row of controls that scrolls sideways instead of wrapping into stacked
+   rows — on a phone the toolbar otherwise grew to a third of the screen. */
+.pm-scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.pm-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* Keeps content clear of the iOS home indicator. */
+.pm-safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
 button,
@@ -176,6 +206,7 @@ textarea {
   border: 1px solid var(--pm-border-subtle);
   background: var(--pm-panel);
   padding: 0.25rem;
+  flex: none;
 }
 
 .pm-segmented-control-btn {
@@ -199,6 +230,49 @@ textarea {
   background: var(--pm-surface);
   color: var(--pm-text-strong);
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Touch input has no hover to reveal affordances and needs a bigger target, so
+   every control grows on coarse pointers regardless of viewport width. */
+@media (pointer: coarse) {
+  .pm-segmented-control {
+    height: 2.75rem;
+  }
+
+  .pm-segmented-control-btn {
+    min-width: 2.5rem;
+    align-self: stretch;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .pm-segmented-control-btn:hover {
+    background: transparent;
+    color: var(--pm-text-muted);
+  }
+
+  .pm-segmented-control-btn.active:hover {
+    background: var(--pm-surface);
+    color: var(--pm-text-strong);
+  }
+
+  /* Per-page controls (select, rotate, delete) ship at 28px, which is well below
+     a comfortable touch target on the one surface users tap most. */
+  .pm-page-select-toggle {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  /* Selects sitting inside a chip render as 22px-tall hit areas otherwise. */
+  .pm-chip-select {
+    min-height: 2.25rem;
+  }
+
+  /* Dense per-document actions in the documents sheet. */
+  .pm-touch-target {
+    min-height: 2.25rem;
+    padding-inline: 0.625rem;
+  }
 }
 
 /* Helper class to guarantee high-contrast text on strong backgrounds */
