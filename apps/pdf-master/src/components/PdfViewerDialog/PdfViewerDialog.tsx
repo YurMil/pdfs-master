@@ -37,26 +37,47 @@ export function PdfViewerDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[color:var(--pm-overlay)] p-3 backdrop-blur-sm">
+    // A phone gets a full-bleed sheet rather than a windowed dialog: at 375px the
+    // header's button cluster squeezed the title column down to one word per
+    // line. Above sm the original centred dialog is unchanged.
+    <div className="fixed inset-0 z-[70] flex items-stretch justify-center bg-[color:var(--pm-overlay)] backdrop-blur-sm sm:items-center sm:p-3">
       <div
         className={clsx(
-          'flex w-full flex-col overflow-hidden rounded-2xl border border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] shadow-2xl',
-          expanded ? 'h-[calc(100vh-24px)] max-w-none' : 'h-[min(88vh,920px)] max-w-[min(96vw,1480px)]',
+          'flex w-full flex-col overflow-hidden border-[color:var(--pm-border-subtle)] bg-[color:var(--pm-surface)] shadow-2xl sm:rounded-2xl sm:border',
+          expanded
+            ? 'h-full max-w-none sm:h-[calc(100vh-24px)]'
+            : 'h-full sm:h-[min(88vh,920px)] sm:max-w-[min(96vw,1480px)]',
         )}
       >
-        <div className="flex flex-wrap items-center gap-3 border-b border-[color:var(--pm-border-subtle)] px-5 py-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">PDF viewer</p>
-            <h3 className="truncate text-base font-semibold text-[color:var(--pm-text-strong)]">{title}</h3>
-            <p className="mt-1 text-xs text-[color:var(--pm-text-muted)]">
-              Page {pageNumber}. The embedded viewer is optimized for smooth canvas rendering and low memory usage. Use "Open in browser" for browser-native search, text selection, annotations, and comments.
-            </p>
-          </div>
+        <div className="flex flex-col gap-2 border-b border-[color:var(--pm-border-subtle)] px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:px-5">
+          <div className="flex min-w-0 items-start gap-3 sm:flex-1">
+            <div className="min-w-0 flex-1">
+              <p className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)] sm:block">PDF viewer</p>
+              <h3 className="truncate text-base font-semibold text-[color:var(--pm-text-strong)]">{title}</h3>
+              <p className="mt-1 text-xs text-[color:var(--pm-text-muted)] sm:hidden">Page {pageNumber}</p>
+              <p className="mt-1 hidden text-xs text-[color:var(--pm-text-muted)] sm:block">
+                Page {pageNumber}. The embedded viewer is optimized for smooth canvas rendering and low memory usage. Use "Open in browser" for browser-native search, text selection, annotations, and comments.
+              </p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+            {/* Close stays put on a phone; the actions below it scroll. */}
             <button
               type="button"
-              className="rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
+              aria-label="Close viewer"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text)] sm:hidden"
+              onClick={onClose}
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4 fill-none stroke-current" strokeWidth="1.75">
+                <path d="M5 5l10 10" />
+                <path d="M15 5L5 15" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="pm-scroll-x -mx-4 flex items-center gap-2 px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+            <button
+              type="button"
+              className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)] disabled:opacity-45 sm:h-auto sm:py-2"
               onClick={onOpenInBrowser}
               disabled={!pdfBlob || loading}
             >
@@ -64,7 +85,7 @@ export function PdfViewerDialog({
             </button>
             <button
               type="button"
-              className="rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
+              className="h-10 shrink-0 whitespace-nowrap rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)] disabled:opacity-45 sm:h-auto sm:py-2"
               onClick={onDownload}
               disabled={!pdfBlob || loading}
             >
@@ -72,14 +93,14 @@ export function PdfViewerDialog({
             </button>
             <button
               type="button"
-              className="rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)]"
+              className="hidden shrink-0 whitespace-nowrap rounded-lg border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 py-2 text-sm font-medium text-[color:var(--pm-text)] hover:bg-[color:var(--pm-surface-hover)] sm:inline-flex"
               onClick={onToggleExpanded}
             >
               {expanded ? 'Windowed' : 'Expand'}
             </button>
             <button
               type="button"
-              className="rounded-lg pm-bg-strong px-3 py-2 text-sm font-medium hover:opacity-90 transition"
+              className="hidden rounded-lg pm-bg-strong px-3 py-2 text-sm font-medium transition hover:opacity-90 sm:inline-flex"
               onClick={onClose}
             >
               Close

@@ -77,8 +77,11 @@ export function Toolbar({
 }: ToolbarProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--pm-border)] bg-[color:var(--pm-shell)]/95 backdrop-blur-md">
-      <div className="flex min-h-14 flex-wrap items-center gap-2 px-3 py-2 sm:px-4">
-        <div className="mr-2 flex min-w-[220px] items-center gap-3">
+      {/* Below xl the three clusters stack into rows that scroll sideways rather
+          than wrapping — wrapping grew the header to ~290px on a 375px phone,
+          almost a third of the screen. The xl: classes restore the desktop row. */}
+      <div className="flex min-h-14 flex-col gap-2 px-3 py-2 sm:px-4 xl:flex-row xl:flex-wrap xl:items-center">
+        <div className="flex items-center gap-3 xl:mr-2 xl:min-w-[220px]">
           <IconButton
             active={!documentsPaneCollapsed}
             label="Documents"
@@ -88,7 +91,9 @@ export function Toolbar({
             <PanelsIcon />
           </IconButton>
 
-          <div className="min-w-0">
+          {/* flex-1 pushes the mobile-only inspector button to the right edge;
+              on xl the block must stay narrow so the toolbar keeps one row. */}
+          <div className="min-w-0 flex-1 xl:flex-none">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-sm font-semibold text-[color:var(--pm-text-strong)]">PDF Master</h1>
               <span className="rounded-md border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--pm-text-muted)]">
@@ -101,9 +106,22 @@ export function Toolbar({
                 : 'Local PDF workspace'}
             </p>
           </div>
+
+          {/* On desktop the inspector toggle lives at the far right of the row;
+              on mobile that row does not exist, so it sits beside the title. */}
+          <IconButton
+            active={inspectorOpen}
+            label="Inspector"
+            title="Toggle inspector"
+            onClick={onToggleInspector}
+            disabled={!hasWorkspace}
+            className="xl:hidden"
+          >
+            <InspectorIcon />
+          </IconButton>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="pm-scroll-x -mx-3 flex items-center gap-2 px-3 sm:-mx-4 sm:px-4 xl:mx-0 xl:flex-wrap xl:overflow-visible xl:px-0">
           <PrimaryActionButton label={importBusy ? 'Importing...' : 'Import'} active onClick={onImport} disabled={importBusy} />
           <PrimaryActionButton label="Export" onClick={onExport} disabled={!hasWorkspace} />
           <PrimaryActionButton label="Merge" onClick={onMerge} disabled={!hasWorkspace} />
@@ -115,62 +133,67 @@ export function Toolbar({
           />
         </div>
 
-        <div className="ml-auto flex flex-1 flex-wrap items-center justify-end gap-2 xl:flex-nowrap">
-          <label className="flex h-9 min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 text-sm text-[color:var(--pm-text-muted)] xl:max-w-[240px] xl:flex-none">
+        <div className="flex items-center gap-2 xl:ml-auto xl:flex-1 xl:flex-nowrap xl:justify-end">
+          <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-3 text-sm text-[color:var(--pm-text-muted)] xl:h-9 xl:min-w-[180px] xl:max-w-[240px]">
             <SearchIcon />
             <input
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              className="w-full border-0 bg-transparent p-0 text-sm text-[color:var(--pm-text-strong)] outline-none placeholder:text-[color:var(--pm-text-faint)]"
+              // 16px keeps iOS Safari from zooming the viewport on focus.
+              className="w-full min-w-0 border-0 bg-transparent p-0 text-base text-[color:var(--pm-text-strong)] outline-none placeholder:text-[color:var(--pm-text-faint)] xl:text-sm"
               placeholder="Search pages by text, label, or number"
             />
           </label>
 
-          <SegmentedControl<ViewMode>
-            label="View mode"
-            options={[
-              { value: 'grid', label: 'Grid' },
-              { value: 'list', label: 'List' },
-            ]}
-            value={viewMode}
-            onChange={onViewModeChange}
-          />
+          <div className="pm-scroll-x flex items-center gap-2 xl:overflow-visible">
+            <SegmentedControl<ViewMode>
+              label="View mode"
+              options={[
+                { value: 'grid', label: 'Grid' },
+                { value: 'list', label: 'List' },
+              ]}
+              value={viewMode}
+              onChange={onViewModeChange}
+            />
 
-          <SegmentedControl<ThumbnailDensity>
-            label="Thumbnail size"
-            options={densityOptions}
-            value={thumbnailDensity}
-            onChange={onThumbnailDensityChange}
-          />
+            <SegmentedControl<ThumbnailDensity>
+              label="Thumbnail size"
+              options={densityOptions}
+              value={thumbnailDensity}
+              onChange={onThumbnailDensityChange}
+            />
 
-          {selectedCount ? (
-            <div className="flex items-center gap-1 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 py-1.5">
-              <span className="px-1 text-xs font-medium text-[color:var(--pm-text-muted)]">{selectedCount} selected</span>
-              <IconButton label="Rotate" title="Rotate selected pages" onClick={onRotate}>
-                <RotateIcon />
-              </IconButton>
-              <IconButton label="Delete" title="Delete selected pages" onClick={onDelete} tone="danger">
-                <DeleteIcon />
-              </IconButton>
-              <IconButton label="Clear" title="Clear selection" onClick={onClearSelection}>
-                <ClearIcon />
-              </IconButton>
-            </div>
-          ) : null}
+            {selectedCount ? (
+              <div className="flex shrink-0 items-center gap-1 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 py-1.5">
+                <span className="whitespace-nowrap px-1 text-xs font-medium text-[color:var(--pm-text-muted)]">{selectedCount} selected</span>
+                <IconButton label="Rotate" title="Rotate selected pages" onClick={onRotate}>
+                  <RotateIcon />
+                </IconButton>
+                <IconButton label="Delete" title="Delete selected pages" onClick={onDelete} tone="danger">
+                  <DeleteIcon />
+                </IconButton>
+                <IconButton label="Clear" title="Clear selection" onClick={onClearSelection}>
+                  <ClearIcon />
+                </IconButton>
+              </div>
+            ) : null}
 
-          <IconButton
-            active={inspectorOpen}
-            label="Inspector"
-            title="Toggle inspector"
-            onClick={onToggleInspector}
-            disabled={!hasWorkspace}
-          >
-            <InspectorIcon />
-          </IconButton>
+            <IconButton
+              active={inspectorOpen}
+              label="Inspector"
+              title="Toggle inspector"
+              onClick={onToggleInspector}
+              disabled={!hasWorkspace}
+              className="hidden xl:inline-flex"
+            >
+              <InspectorIcon />
+            </IconButton>
+          </div>
         </div>
       </div>
 
-      <div className="flex min-h-8 items-center gap-3 border-t border-[var(--pm-border)] px-3 py-1.5 text-xs text-[color:var(--pm-text-muted)] sm:px-4">
+      {/* Mouse-gesture hints; meaningless on touch and costly in vertical space. */}
+      <div className="hidden min-h-8 items-center gap-3 border-t border-[var(--pm-border)] px-3 py-1.5 text-xs text-[color:var(--pm-text-muted)] sm:px-4 xl:flex">
         <span className="font-medium text-[color:var(--pm-text)]">Workspace</span>
         <span>Click to select</span>
         <span>Use the circle icon on a thumbnail to mark exact pages</span>
@@ -199,7 +222,7 @@ function PrimaryActionButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'inline-flex h-9 items-center rounded-xl border px-3 text-sm font-medium transition',
+        'inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-xl border px-3 text-sm font-medium transition xl:h-9',
         active
           ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent)] text-[color:var(--pm-on-accent)] shadow-sm'
           : 'border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text)] hover:border-[color:var(--pm-border-strong)] hover:bg-[color:var(--pm-surface-hover)]',
@@ -249,6 +272,7 @@ function IconButton({
   active,
   disabled,
   tone = 'neutral',
+  className,
 }: {
   children: ReactNode;
   label: string;
@@ -257,6 +281,7 @@ function IconButton({
   active?: boolean;
   disabled?: boolean;
   tone?: 'neutral' | 'danger';
+  className?: string;
 }) {
   return (
     <button
@@ -266,13 +291,14 @@ function IconButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'inline-flex h-8 w-8 items-center justify-center rounded-lg border transition',
+        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition xl:h-8 xl:w-8',
         tone === 'danger'
           ? 'border-[color:var(--pm-danger-border)] bg-[color:var(--pm-danger-surface)] text-[color:var(--pm-danger-text)] hover:bg-[color:var(--pm-danger-surface-hover)]'
           : active
             ? 'border-[color:var(--pm-accent-strong)] bg-[color:var(--pm-accent-soft)] text-[color:var(--pm-accent-strong)]'
             : 'border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] text-[color:var(--pm-text-muted)] hover:bg-[color:var(--pm-surface-hover)]',
         disabled && 'cursor-not-allowed opacity-45',
+        className,
       )}
     >
       {children}
@@ -289,13 +315,13 @@ function ImageFormatPicker({
 }) {
   return (
     <div
-      className="flex h-9 items-center gap-1.5 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 text-xs text-[color:var(--pm-text-muted)]"
+      className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-[color:var(--pm-border)] bg-[color:var(--pm-surface)] px-2 text-xs text-[color:var(--pm-text-muted)] xl:h-9"
       title="Default page format applied to imported images. Click an image-derived page in the Inspector to override per file."
     >
       <span className="font-medium uppercase tracking-[0.14em] text-[color:var(--pm-text-muted)]">Image</span>
       <select
         aria-label="Default paper format for imported images"
-        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
+        className="pm-chip-select rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
         value={settings.paperFormat}
         onChange={(event) => onChange({ paperFormat: event.target.value as PaperFormat })}
       >
@@ -307,7 +333,7 @@ function ImageFormatPicker({
       </select>
       <select
         aria-label="Default orientation for imported images"
-        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
+        className="pm-chip-select rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
         value={settings.orientation}
         onChange={(event) => onChange({ orientation: event.target.value as PaperOrientation })}
       >
@@ -320,7 +346,7 @@ function ImageFormatPicker({
       <span className="ml-1 text-[10px] uppercase tracking-[0.14em] text-[color:var(--pm-text-faint)]">Margin</span>
       <select
         aria-label="Default page margin for imported images"
-        className="rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
+        className="pm-chip-select rounded-md border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-[color:var(--pm-text-strong)] outline-none focus:ring-1 focus:ring-[color:var(--pm-border-strong)]"
         value={settings.marginMm}
         onChange={(event) => onChange({ marginMm: Number(event.target.value) })}
       >

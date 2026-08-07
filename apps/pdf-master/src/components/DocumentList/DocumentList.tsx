@@ -224,7 +224,7 @@ function MiniAction({
         onClick();
       }}
       className={clsx(
-        'rounded-lg border px-2 py-1 text-[11px] font-medium transition',
+        'pm-touch-target rounded-lg border px-2 py-1 text-[11px] font-medium transition',
         tone === 'accent'
           ? 'border-[color:var(--pm-accent)]/40 bg-[color:var(--pm-accent-soft)] text-[color:var(--pm-accent-strong)] hover:bg-[color:var(--pm-accent-soft)]'
           : tone === 'danger'
