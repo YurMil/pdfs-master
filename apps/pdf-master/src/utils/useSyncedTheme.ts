@@ -35,10 +35,20 @@ export function useSyncedTheme() {
     const root = document.documentElement;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
 
+    // `ownObserver` below watches the very attribute this writes, and
+    // setAttribute queues a mutation record even when the value is unchanged.
+    // Without the equality guard the observer callback re-applies the theme,
+    // queues another record, and the microtask loop never yields — the tab
+    // hangs as soon as anything (the host applying a saved theme, a theme
+    // toggle, a postMessage) triggers the first apply.
     const applyTheme = (nextTheme: ThemeMode) => {
-      root.setAttribute('data-theme', nextTheme);
+      if (root.getAttribute('data-theme') !== nextTheme) {
+        root.setAttribute('data-theme', nextTheme);
+      }
       root.classList.toggle('dark', nextTheme === 'dark');
-      root.style.colorScheme = nextTheme;
+      if (root.style.colorScheme !== nextTheme) {
+        root.style.colorScheme = nextTheme;
+      }
     };
 
     const syncFromHost = () => {
