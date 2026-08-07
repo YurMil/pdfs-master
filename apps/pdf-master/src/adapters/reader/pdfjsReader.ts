@@ -22,15 +22,14 @@ export class PdfjsReader implements PdfReader {
   private readonly cache = new Map<string, CachedDocument>();
   private readonly renderEnvironment = getThumbnailRenderEnvironment();
 
-  async loadDocument(documentId: string, sourceFile: File, sourceUrl?: string): Promise<{ documentId: string; pageCount: number }> {
-    const document = await this.getDocument(documentId, sourceFile, sourceUrl);
+  async loadDocument(documentId: string, sourceFile: File): Promise<{ documentId: string; pageCount: number }> {
+    const document = await this.getDocument(documentId, sourceFile);
     return { documentId, pageCount: document.numPages };
   }
 
   async renderPageThumbnail(input: {
     documentId: string;
     sourceFile: File;
-    sourceUrl?: string;
     pageIndex: number;
     maxWidth: number;
     signal?: AbortSignal;
@@ -39,7 +38,7 @@ export class PdfjsReader implements PdfReader {
       throw new DOMException('Thumbnail rendering canceled.', 'AbortError');
     }
 
-    const pdfDocument = await this.getDocument(input.documentId, input.sourceFile, input.sourceUrl);
+    const pdfDocument = await this.getDocument(input.documentId, input.sourceFile);
     const page = await pdfDocument.getPage(input.pageIndex + 1);
     const baseViewport = page.getViewport({ scale: 1 });
     const scale = input.maxWidth / baseViewport.width;
@@ -113,15 +112,18 @@ export class PdfjsReader implements PdfReader {
     await document?.destroy();
   }
 
-  private async getDocument(documentId: string, sourceFile: File, sourceUrl?: string): Promise<PDFDocumentProxy> {
+  private async getDocument(documentId: string, sourceFile: File): Promise<PDFDocumentProxy> {
     const cached = this.cache.get(documentId);
     if (cached) {
       return cached.document;
     }
 
-    const url = sourceUrl || URL.createObjectURL(sourceFile);
+    // Hand pdf.js the bytes instead of an object URL. Loading by URL makes
+    // pdf.js fetch it, and a blob: fetch is a connect-src violation under the
+    // host site's CSP — which is what left every thumbnail as RENDER FAILED.
+    const data = new Uint8Array(await sourceFile.arrayBuffer());
     const loadingTask = pdfjs.getDocument({
-      url,
+      data,
       useWorkerFetch: false,
       isOffscreenCanvasSupported: this.renderEnvironment.supportsOffscreenCanvas,
       enableHWA: this.renderEnvironment.supportsHardwareAcceleration,

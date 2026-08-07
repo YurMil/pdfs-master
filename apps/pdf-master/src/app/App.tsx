@@ -336,7 +336,6 @@ export function App() {
         pageId: page.id,
         documentId: document.id,
         sourceFile: document.sourceFile.file,
-        sourceUrl: document.sourceUrl,
         pageIndex: page.sourcePageIndex,
         maxWidth: thumbnailMaxWidth[thumbnailDensity],
       });

@@ -75,7 +75,10 @@ export interface RenderWorkerRequest {
   requestId: string;
   documentId: string;
   pageId: string;
-  url: string;
+  // The source file itself, not an object URL: fetching a blob: URL counts as a
+  // connection, and the host site's CSP has no blob: in connect-src. Structured
+  // cloning a File passes a handle, so this does not copy the bytes.
+  file: File;
   pageIndex: number;
   maxWidth: number;
 }

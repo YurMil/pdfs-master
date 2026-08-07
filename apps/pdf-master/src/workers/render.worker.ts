@@ -76,7 +76,7 @@ async function renderThumbnail(message: RenderWorkerRequest): Promise<void> {
   let canvas: OffscreenCanvas | null = null;
 
   try {
-    const pdfDocument = await getDocument(message.documentId, message.url);
+    const pdfDocument = await getDocument(message.documentId, message.file);
     if (active.aborted) {
       throw new DOMException('Thumbnail rendering canceled.', 'AbortError');
     }
@@ -172,14 +172,17 @@ async function resetWorker(_message: RenderWorkerResetRequest): Promise<void> {
   await Promise.all(documentIds.map((documentId) => releaseDocument({ type: 'render:release-document', documentId })));
 }
 
-async function getDocument(documentId: string, url: string): Promise<PDFDocumentProxy> {
+async function getDocument(documentId: string, file: File): Promise<PDFDocumentProxy> {
   const cached = documentCache.get(documentId);
   if (cached) {
     return cached.document;
   }
 
+  // Read the bytes here rather than handing pdf.js a URL to fetch: the bytes
+  // are already local, and a blob: fetch is blocked by the host site's CSP.
+  const data = new Uint8Array(await file.arrayBuffer());
   const loadingTask = pdfjs.getDocument({
-    url: url,
+    data,
     disableWorker: true,
     useWorkerFetch: false,
     isOffscreenCanvasSupported: renderEnvironment.supportsOffscreenCanvas,
