@@ -11,7 +11,6 @@ interface ThumbnailRequest {
   pageId: string;
   documentId: string;
   sourceFile: File;
-  sourceUrl?: string;
   pageIndex: number;
   maxWidth: number;
 }
@@ -80,7 +79,7 @@ export class ThumbnailQueue {
 
     let runTask: () => Promise<Blob>;
 
-    if (this.workerAvailable && this.getActiveWorkers().length > 0 && request.sourceUrl) {
+    if (this.workerAvailable && this.getActiveWorkers().length > 0) {
       const client = this.getWorkerForDocument(request.documentId);
       runTask = async () => {
         try {
@@ -97,7 +96,6 @@ export class ThumbnailQueue {
             this.reader.renderPageThumbnail({
               documentId: request.documentId,
               sourceFile: request.sourceFile,
-              sourceUrl: request.sourceUrl,
               pageIndex: request.pageIndex,
               maxWidth: request.maxWidth,
               signal: controller.signal,
@@ -111,7 +109,6 @@ export class ThumbnailQueue {
           this.reader.renderPageThumbnail({
             documentId: request.documentId,
             sourceFile: request.sourceFile,
-            sourceUrl: request.sourceUrl,
             pageIndex: request.pageIndex,
             maxWidth: request.maxWidth,
             signal: controller.signal,
@@ -261,7 +258,7 @@ export class ThumbnailQueue {
         requestId: workerRequestId,
         documentId: request.documentId,
         pageId: request.pageId,
-        url: request.sourceUrl || '',
+        file: request.sourceFile,
         pageIndex: request.pageIndex,
         maxWidth: request.maxWidth,
       };

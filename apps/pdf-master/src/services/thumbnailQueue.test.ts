@@ -25,6 +25,7 @@ class MockWorker {
   }
 
   postMessage(message: { type: string; requestId: string; pageId: string }) {
+    MockWorker.postedMessages.push(message);
     if (message.type === 'render') {
       // Allow tests to intercept and respond
       setTimeout(() => {
@@ -38,6 +39,7 @@ class MockWorker {
   }
 
   static onPostMessage?: (message: { type: string; requestId: string; pageId: string }) => void;
+  static postedMessages: Array<Record<string, unknown>> = [];
 }
 
 // Mock getThumbnailRenderEnvironment to enable workers
@@ -68,6 +70,7 @@ describe('ThumbnailQueue fallback behavior', () => {
     vi.stubGlobal('Worker', MockWorker);
     MockWorker.lastInstance = null;
     MockWorker.onPostMessage = undefined;
+    MockWorker.postedMessages = [];
 
     mockReader = {
       loadDocument: vi.fn(),
@@ -105,7 +108,6 @@ describe('ThumbnailQueue fallback behavior', () => {
       pageId: 'page-1',
       documentId: 'doc-1',
       sourceFile: file,
-      sourceUrl: 'blob:url',
       pageIndex: 0,
       maxWidth: 150,
     });
@@ -113,6 +115,37 @@ describe('ThumbnailQueue fallback behavior', () => {
     expect(url).toBeDefined();
     expect(url.startsWith('blob:')).toBe(true);
     expect(mockReader.renderPageThumbnail).not.toHaveBeenCalled();
+  });
+
+  it('sends the source file to the worker rather than an object URL', async () => {
+    // Loading by blob: URL makes pdf.js fetch it, which the host site's CSP
+    // blocks under connect-src — every thumbnail came back RENDER FAILED.
+    const queue = new ThumbnailQueue(mockReader);
+
+    MockWorker.onPostMessage = (message) => {
+      MockWorker.lastInstance?.onmessage?.({
+        data: {
+          type: 'render:success',
+          requestId: message.requestId,
+          pageId: message.pageId,
+          blob: new Blob(['worker-blob'], { type: 'image/png' }),
+          width: 100,
+          height: 150,
+        },
+      } as MessageEvent);
+    };
+
+    await queue.requestThumbnail({
+      pageId: 'page-1',
+      documentId: 'doc-1',
+      sourceFile: file,
+      pageIndex: 0,
+      maxWidth: 150,
+    });
+
+    const renderMessage = MockWorker.postedMessages.find((message) => message.type === 'render');
+    expect(renderMessage?.file).toBe(file);
+    expect(renderMessage).not.toHaveProperty('url');
   });
 
   it('falls back to main-thread rendering if the worker returns a render error', async () => {
@@ -137,7 +170,6 @@ describe('ThumbnailQueue fallback behavior', () => {
       pageId: 'page-1',
       documentId: 'doc-1',
       sourceFile: file,
-      sourceUrl: 'blob:url',
       pageIndex: 0,
       maxWidth: 150,
     });
@@ -160,7 +192,6 @@ describe('ThumbnailQueue fallback behavior', () => {
       pageId: 'page-1',
       documentId: 'doc-1',
       sourceFile: file,
-      sourceUrl: 'blob:url',
       pageIndex: 0,
       maxWidth: 150,
     });
