@@ -27,6 +27,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Run Tests
+        run: pnpm test
+
       - name: Build Static App
         run: pnpm run build
 
